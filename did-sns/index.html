@@ -148,9 +148,12 @@
         </li>
         <li><a href="#metadata">On-Chain Metadata Schema</a></li>
         <li><a href="#sas">SAS Integration (Proof Layer)</a></li>
-        <li><a href="#security">Security Considerations</a></li>
-        <li><a href="#pqc">Post-Quantum Cryptography Migration</a></li>
-        <li><a href="#vault-keys">Vault Key Architecture &amp; Social Recovery</a></li>
+        <li><a href="#security">Security Considerations</a>
+          <ol>
+            <li><a href="#pqc">Post-Quantum Cryptography Migration</a></li>
+            <li><a href="#vault-keys">Vault Key Architecture &amp; Social Recovery</a></li>
+          </ol>
+        </li>
         <li><a href="#privacy">Privacy Considerations</a></li>
         <li><a href="#references">References</a></li>
       </ol>
@@ -482,8 +485,9 @@ attestto.sol                    &rarr; Platform Authority
     <h2 id="operations">5. CRUD Operations</h2>
 
     <h3 id="op-create">5.1 Create</h3>
-    <p>A <code>did:sns</code> DID is created by registering an SNS domain on Solana. The DID exists
-    implicitly once the NameRegistry account is created on-chain.</p>
+    <p>A <code>did:sns</code> DID is created by registering an SNS domain on Solana and writing
+    DID metadata to the domain&rsquo;s raw data buffer. The domain registration alone does
+    <strong>not</strong> constitute a functional DID &mdash; the metadata write (step 2) is required.</p>
 
     <table>
       <tr><th>Step</th><th>Action</th><th>On-Chain Effect</th></tr>
@@ -582,7 +586,7 @@ attestto.sol                    &rarr; Platform Authority
     <ol>
       <li>Check data buffer for <code>0x44494401</code> magic &rarr; parse DID metadata (v1 or v2)</li>
       <li>If v2 + <code>HAS_SAS</code> &rarr; follow SAS attestation UID for issuer-signed claims</li>
-      <li>Fallback &rarr; minimal DID Document from owner key only</li>
+      <li>Fallback &rarr; degraded DID Document from owner key only (no services, no encryption)</li>
     </ol>
 
     <h4>Error Codes</h4>
@@ -605,9 +609,15 @@ attestto.sol                    &rarr; Platform Authority
       <tr><td>Transfer subdomain</td><td>Reassign subdomain owner</td><td>New key in verification methods</td></tr>
     </table>
 
-    <div class="note">
+    <div class="note note-amber">
       <strong>Name portability:</strong> When domain ownership transfers, the DID identifier remains stable.
       Only the verification methods change. This is a key advantage over account-anchored methods.
+      <br><br>
+      <strong>Security implication:</strong> The new domain owner inherits the DID identifier and can write
+      fresh metadata under it. Verifiers relying solely on the minimal DID Document (without SAS
+      attestation) cannot detect ownership changes. For identity continuity assurance, verifiers
+      MUST validate the SAS attestation chain, which is bound to the original issuer &mdash; not the
+      domain owner. See <a href="#security">&sect;8 Security Considerations</a>.
     </div>
 
     <h3>Transfer Security Model</h3>
@@ -697,7 +707,7 @@ Key A (original owner)                event                Key B (new owner)
 |      + ECIES key + Vault hash + Doc hash         |
 +--------------------------------------------------+</div>
 
-    <h3>v2 Schema Layout (160 bytes)</h3>
+    <h3>v2 Schema Layout (192 bytes)</h3>
     <table>
       <tr><th>Field</th><th>Offset</th><th>Size</th><th>Description</th></tr>
       <tr><td>Magic</td><td>0</td><td>4</td><td><code>0x44494401</code> (&ldquo;DID\x01&rdquo;)</td></tr>
@@ -707,18 +717,21 @@ Key A (original owner)                event                Key B (new owner)
       <tr><td>ECIES Key</td><td>38</td><td>33</td><td>Compressed secp256k1 public key for encryption</td></tr>
       <tr><td>Vault Hash</td><td>71</td><td>32</td><td>SHA-256 of vault service endpoint URL</td></tr>
       <tr><td>Doc Hash</td><td>103</td><td>32</td><td>SHA-256 of canonical DID Document</td></tr>
-      <tr><td>Reserved</td><td>135</td><td>25</td><td>Zero-filled (future use)</td></tr>
+      <tr><td>Reserved</td><td>135</td><td>57</td><td>Zero-filled (future use)</td></tr>
     </table>
 
     <h3>Flags Bitfield</h3>
     <table>
       <tr><th>Bit</th><th>Flag</th><th>Meaning</th></tr>
-      <tr><td><code>0x01</code></td><td><code>ACTIVE</code></td><td>Domain is active</td></tr>
+      <tr><td><code>0x01</code></td><td><code>HAS_SAS</code></td><td>SAS attestation linked (proof layer)</td></tr>
       <tr><td><code>0x02</code></td><td><code>HAS_SBT</code></td><td>Soul-Bound Token minted</td></tr>
       <tr><td><code>0x04</code></td><td><code>IS_TIER3</code></td><td>Self-Sovereign ID tier</td></tr>
       <tr><td><code>0x08</code></td><td><code>HAS_LEI</code></td><td>LEI/vLEI credential linked</td></tr>
-      <tr><td><code>0x10</code></td><td><code>HAS_SAS</code></td><td>SAS attestation linked (proof layer)</td></tr>
+      <tr><td><code>0x10</code></td><td><code>HAS_ECIES</code></td><td>ECIES encryption key published</td></tr>
+      <tr><td><code>0x20</code></td><td><code>HAS_PQ</code></td><td>Post-quantum keys in SAS attestation</td></tr>
     </table>
+    <p><strong>Note:</strong> Domain liveness is determined by the owner field (bytes 32&ndash;63), not a flag.
+    A zero-address owner means the domain is deactivated.</p>
 
     <!-- ─── 7. SAS Integration ───────────────────────────────────── -->
 
@@ -805,7 +818,7 @@ Key A (original owner)                event                Key B (new owner)
 
     <!-- ─── 8.1 Post-Quantum Cryptography Migration ─────────────── -->
 
-    <h2 id="pqc">8.1 Post-Quantum Cryptography Migration</h2>
+    <h3 id="pqc">8.1 Post-Quantum Cryptography Migration</h3>
 
     <p>The current <code>did:sns</code> verification methods rely on Ed25519 (signatures) and
     secp256k1 (ECIES encryption), both of which are vulnerable to Shor&rsquo;s algorithm
@@ -893,7 +906,7 @@ Key A (original owner)                event                Key B (new owner)
 
     <!-- ─── 8.2 Vault Key Architecture & Social Recovery ──────────── -->
 
-    <h2 id="vault-keys">8.2 Vault Key Architecture &amp; Social Recovery</h2>
+    <h3 id="vault-keys">8.2 Vault Key Architecture &amp; Social Recovery</h3>
 
     <p>Attestto ID credentials at Tier 3 (Self-Sovereign) use a hierarchical key architecture
     to protect encrypted proof payloads. No single party &mdash; including Attestto &mdash; can
@@ -996,7 +1009,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
 
     <h2 id="privacy">9. Privacy Considerations</h2>
     <ul>
-      <li><strong>Selective disclosure.</strong> SD-JWT (RFC 9449) enables per-field disclosure with
+      <li><strong>Selective disclosure.</strong> SD-JWT (<a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/">draft-ietf-oauth-sd-jwt</a>) enables per-field disclosure with
         individual salt and hash per attribute.</li>
       <li><strong>ZKP predicates.</strong> BBS+ signatures for unlinkable proofs
         (e.g., age &ge; 18, country membership) without revealing the underlying value.</li>
@@ -1018,12 +1031,12 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
     <h2 id="references">10. References</h2>
     <table>
       <tr><th>Reference</th><th>URL</th></tr>
-      <tr><td>W3C DID Core v1.0</td><td><a href="https://www.w3.org/TR/did-core/">w3.org/TR/did-core</a></td></tr>
+      <tr><td>W3C DID Core v1.1</td><td><a href="https://www.w3.org/TR/did-core/">w3.org/TR/did-core</a></td></tr>
       <tr><td>W3C DID Spec Registries</td><td><a href="https://www.w3.org/TR/did-spec-registries/">w3.org/TR/did-spec-registries</a></td></tr>
       <tr><td>DID Resolution v0.3</td><td><a href="https://w3c.github.io/did-resolution/">w3c-ccg.github.io/did-resolution</a></td></tr>
       <tr><td>Solana SPL Name Service</td><td><a href="https://github.com/SolanaNameService/sns-sdk">spl.solana.com/name-service</a></td></tr>
       <tr><td>Solana Attestation Service</td><td><a href="https://attest.solana.com/docs">docs.solanaattestation.com</a></td></tr>
-      <tr><td>SD-JWT (RFC 9449)</td><td><a href="https://www.rfc-editor.org/rfc/rfc9449">rfc-editor.org/rfc/rfc9449</a></td></tr>
+      <tr><td>SD-JWT (IETF Draft)</td><td><a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/">datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt</a></td></tr>
       <tr><td>Ed25519 (RFC 8032)</td><td><a href="https://www.rfc-editor.org/rfc/rfc8032">rfc-editor.org/rfc/rfc8032</a></td></tr>
       <tr><td>ECIES (secp256k1)</td><td>Public domain</td></tr>
       <tr><td>ML-DSA (FIPS 204)</td><td><a href="https://csrc.nist.gov/pubs/fips/204/final">csrc.nist.gov/pubs/fips/204</a></td></tr>
