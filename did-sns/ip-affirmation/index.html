@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>did:sns — IP Affirmation</title>
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+    th { font-weight: 600; background: var(--code-bg); }
+    ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.3rem; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    .affirmation-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      margin: 2rem 0;
+    }
+    .affirmation-box p { margin-bottom: 0.75rem; }
+    .affirmation-box p:last-child { margin-bottom: 0; }
+    .sig-block {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .sig-line {
+      display: inline-block;
+      border-bottom: 1px solid var(--fg);
+      min-width: 16rem;
+      margin-right: 2rem;
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+    .sig-label { font-size: 0.8rem; color: var(--muted); }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../">&larr; Back to specification</a>
+    <h1>Intellectual Property Affirmation</h1>
+    <p class="subtitle">did:sns DID Method Specification &mdash; v0.3.0</p>
+
+    <h2>1. Affirming Entity</h2>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Legal Entity</td><td>Attestto S.A.</td></tr>
+      <tr><td>Jurisdiction</td><td>Republic of Costa Rica</td></tr>
+      <tr><td>Contact</td><td><a href="mailto:standards@attestto.com">standards@attestto.com</a></td></tr>
+      <tr><td>Specification</td><td><code>did:sns</code> DID Method Specification v0.3.0</td></tr>
+      <tr><td>Affirmation Date</td><td>2026-03-11</td></tr>
+    </table>
+
+    <h2>2. Affirmation</h2>
+    <div class="affirmation-box">
+      <p>Attestto S.A., as the editor and primary implementer of the <code>did:sns</code> DID Method Specification, hereby affirms the following:</p>
+
+      <p><strong>2.1 No Known Patent Claims.</strong> To the best of our knowledge, the <code>did:sns</code> specification does not require the use of any technology that is subject to patent claims held by Attestto S.A. or any of its officers, employees, or contributors. No patent applications have been filed by Attestto S.A. that would be essential to the implementation of this specification.</p>
+
+      <p><strong>2.2 No Third-Party IP Infringement.</strong> To the best of our knowledge, the <code>did:sns</code> specification does not infringe upon the intellectual property rights of any third party. The specification builds upon publicly available open standards and open-source protocols.</p>
+
+      <p><strong>2.3 Royalty-Free Commitment.</strong> Attestto S.A. commits to making any contributions to the <code>did:sns</code> specification available on a royalty-free basis, consistent with the <a href="https://www.w3.org/Consortium/Patent-Policy/">W3C Patent Policy</a> and the <a href="https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document">W3C Software and Document License</a>.</p>
+
+      <p><strong>2.4 Contributor Obligation.</strong> All contributors to the <code>did:sns</code> specification are required to affirm, upon submission of their contribution, that the contribution does not infringe upon any third-party intellectual property rights and is made available under the same royalty-free terms.</p>
+    </div>
+
+    <h2>3. Underlying Technologies</h2>
+    <p>The <code>did:sns</code> specification depends on the following open protocols and standards. No proprietary technology is required for a conformant implementation:</p>
+
+    <table>
+      <tr><th>Technology</th><th>License / Status</th><th>IP Implications</th></tr>
+      <tr><td>W3C DID Core v1.0</td><td>W3C Recommendation</td><td>Royalty-free under W3C Patent Policy</td></tr>
+      <tr><td>W3C DID Resolution v0.3</td><td>W3C Draft</td><td>Royalty-free under W3C Patent Policy</td></tr>
+      <tr><td>Solana SPL Name Service</td><td>Apache 2.0</td><td>Open source, no patent encumbrance</td></tr>
+      <tr><td>Solana Attestation Service (SAS)</td><td>Permissionless on-chain protocol</td><td>No license required to create/read attestations</td></tr>
+      <tr><td>Ed25519 (EdDSA)</td><td>Public domain (RFC 8032)</td><td>No known patent claims</td></tr>
+      <tr><td>ECIES (secp256k1)</td><td>Public domain</td><td>No known patent claims</td></tr>
+      <tr><td>JSON-LD 1.1</td><td>W3C Recommendation</td><td>Royalty-free under W3C Patent Policy</td></tr>
+    </table>
+
+    <h2>4. Scope of Affirmation</h2>
+    <p>This affirmation covers:</p>
+    <ul>
+      <li>The <code>did:sns</code> DID Method Specification v0.3.0 and all prior versions</li>
+      <li>The JSON-LD context published at <code>spec.attestto.com/v1/sns.jsonld</code></li>
+      <li>The reference implementation (Attestto resolver, TypeScript/Node.js)</li>
+      <li>The Universal Resolver Docker driver for <code>did:sns</code></li>
+    </ul>
+    <p>This affirmation does <strong>not</strong> cover:</p>
+    <ul>
+      <li>The Attestto platform itself (proprietary SaaS product)</li>
+      <li>Attestto-specific extensions to resolved DID Documents (e.g., tenant branding, custom service endpoints)</li>
+      <li>Third-party implementations of the <code>did:sns</code> specification</li>
+    </ul>
+
+    <h2>5. Dispute Resolution</h2>
+    <p>If any party believes that the <code>did:sns</code> specification infringes upon their intellectual property rights, they should contact <a href="mailto:standards@attestto.com">standards@attestto.com</a> with the following information:</p>
+    <ol>
+      <li>Identification of the claimed IP right (patent number, copyright registration, etc.)</li>
+      <li>The specific section(s) of the specification alleged to infringe</li>
+      <li>A description of the claimed infringement</li>
+    </ol>
+    <p>Attestto S.A. commits to reviewing any such claim within 30 days and, if the claim is substantiated, will work to modify the specification to avoid the infringement or negotiate a royalty-free license.</p>
+
+    <h2>6. Authorization</h2>
+    <div class="sig-block">
+      <p>This IP Affirmation is made on behalf of Attestto S.A. by an authorized representative of the Attestto Identity Standards Group.</p>
+      <br>
+      <div>
+        <span class="sig-line">&nbsp;</span>
+        <span class="sig-line">&nbsp;</span>
+      </div>
+      <div>
+        <span class="sig-label" style="display:inline-block;min-width:16rem;margin-right:2rem;">Authorized Signature</span>
+        <span class="sig-label">Date</span>
+      </div>
+      <br>
+      <div>
+        <span class="sig-line">&nbsp;</span>
+      </div>
+      <div>
+        <span class="sig-label">Name and Title</span>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2026 Attestto Identity Standards Group &middot; <a href="mailto:standards@attestto.com">standards@attestto.com</a></p>
+      <p>Published under the <a href="https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document">W3C Software and Document License</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>
