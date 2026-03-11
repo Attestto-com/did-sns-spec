@@ -488,14 +488,17 @@ attestto.sol                    &rarr; Platform Authority
     <table>
       <tr><th>Step</th><th>Action</th><th>On-Chain Effect</th></tr>
       <tr><td>1</td><td>Register SNS domain (Bonfida SDK / SNS CLI)</td><td>NameRegistry created; owner = registrant&rsquo;s Solana key</td></tr>
-      <tr><td>2</td><td>Write DID metadata to data buffer (optional)</td><td>Magic <code>0x44494401</code> + flags + keys at offset 96</td></tr>
+      <tr><td>2</td><td>Write DID metadata to data buffer (<strong>required</strong>)</td><td>Magic <code>0x44494401</code> + flags + keys at offset 96 via <code>update</code> instruction</td></tr>
       <tr><td>3</td><td>Create subdomain (optional)</td><td>Child NameRegistry with parent PDA as seed</td></tr>
       <tr><td>4</td><td>Link SAS attestation (optional)</td><td>SAS UID written to buffer; <code>HAS_SAS</code> flag set</td></tr>
     </table>
 
-    <div class="note note-green">
-      <strong>No DID registration transaction required.</strong> Any SNS domain automatically has a resolvable DID.
-      The resolver constructs a minimal DID Document from the owner key even without explicit metadata.
+    <div class="note">
+      <strong>DID registration requires an on-chain write.</strong> The <code>did:sns</code> method stores DID metadata
+      in the <strong>raw data buffer</strong> of the Name Registry Account (bytes 96+) using the Name Service Program&rsquo;s
+      native <code>update</code> instruction &mdash; not the SNS Records Program. Without this explicit write,
+      the resolver falls back to a degraded minimal document (owner key only) with no service endpoints,
+      encryption keys, or SAS attestation link. This fallback MUST NOT be treated as a registered DID identity.
     </div>
 
     <h4>Subdomain Delegation Models</h4>
@@ -525,7 +528,7 @@ attestto.sol                    &rarr; Platform Authority
   9.  If owner is zero address &rarr; return deactivated
  10.  Check data buffer (bytes 96+) for magic 0x44494401:
       a. Found &rarr; parse DID metadata (v1 or v2 schema)
-      b. Not found &rarr; minimal fallback (owner key only)
+      b. Not found &rarr; degraded fallback (owner key only, no services/encryption)
  11.  If v2 + HAS_SAS flag &rarr; follow SAS UID for issuer-signed claims
  12.  Set controller from parent domain hierarchy
  13.  Populate service endpoints
@@ -791,6 +794,13 @@ Key A (original owner)                event                Key B (new owner)
       <li><strong>Post-quantum readiness.</strong> Current verification methods (Ed25519, secp256k1)
         are vulnerable to cryptographically-relevant quantum computers. See
         <a href="#pqc">&sect;8.1 Post-Quantum Cryptography Migration</a> for the transition plan.</li>
+      <li><strong>DID registration is not implicit.</strong> Unlike methods where registration is
+        automatic (e.g., <code>did:key</code>), <code>did:sns</code> requires an explicit on-chain
+        write transaction to store DID metadata in the raw data buffer via the Name Service Program&rsquo;s
+        <code>update</code> instruction. The resolver&rsquo;s minimal fallback (constructing a document
+        from the owner key alone) is a degraded mode &mdash; verifiers SHOULD reject fallback-only
+        documents for operations requiring service endpoints, encryption keys, or SAS attestation
+        verification.</li>
     </ul>
 
     <!-- ─── 8.1 Post-Quantum Cryptography Migration ─────────────── -->
