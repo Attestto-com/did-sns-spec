@@ -97,6 +97,7 @@
     .note-green { background: var(--green-bg); border-left-color: var(--green); }
     .note-amber { background: var(--amber-bg); border-left-color: var(--amber); }
     .note-purple { background: var(--purple-bg); border-left-color: var(--purple); }
+    .note-red { background: #fef2f2; border-left-color: #dc2626; }
 
     /* ASCII diagram */
     .ascii { background: var(--code-bg); padding: 1.25rem 1.5rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1.25rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.5; white-space: pre; }
@@ -502,7 +503,14 @@ attestto.sol                    &rarr; Platform Authority
       in the <strong>raw data buffer</strong> of the Name Registry Account (bytes 96+) using the Name Service Program&rsquo;s
       native <code>update</code> instruction &mdash; not the SNS Records Program. Without this explicit write,
       the resolver falls back to a degraded minimal document (owner key only) with no service endpoints,
-      encryption keys, or SAS attestation link. This fallback MUST NOT be treated as a registered DID identity.
+      encryption keys, or SAS attestation link.
+    </div>
+
+    <div class="note note-red">
+      <strong>WARNING:</strong> The degraded fallback (owner key only) MUST NOT be treated as a registered
+      DID identity. Verifiers MUST reject fallback-only documents for any operation requiring authentication,
+      encryption, credential verification, or SAS attestation validation. A domain without DID metadata
+      in its raw data buffer is simply an SNS domain &mdash; not a <code>did:sns</code> identity.
     </div>
 
     <h4>Subdomain Delegation Models</h4>
@@ -666,6 +674,14 @@ Key A (original owner)                event                Key B (new owner)
       </tr>
     </table>
 
+    <div class="note note-red">
+      <strong>WARNING:</strong> After a domain transfer, the previous owner&rsquo;s key is no longer
+      resolvable via current DID resolution. Old signatures become unverifiable through the DID
+      layer alone. Smart contracts and legal documents MUST embed the signer&rsquo;s public key
+      (not just the DID) in signature metadata to remain independently verifiable. SBTs create
+      a permanent mismatch &mdash; the issuer must mint a new SBT for the new owner.
+    </div>
+
     <h4>Versioned Resolution</h4>
     <p>To verify signatures made under a previous key, verifiers SHOULD use
     <code>didDocumentMetadata.versionId</code> to request the DID Document at the
@@ -689,6 +705,13 @@ Key A (original owner)                event                Key B (new owner)
   "didResolutionMetadata": { "contentType": "application/did+ld+json" },
   "didDocumentMetadata": { "deactivated": true }
 }</code></pre>
+
+    <div class="note note-red">
+      <strong>WARNING &mdash; IRREVERSIBLE:</strong> Transferring a domain to the zero address is permanent.
+      The SNS program does not support reclaiming a zero-owner domain. All associated SAS attestations,
+      service endpoints, and credential references become unresolvable. Deactivate only when the identity
+      must be permanently retired.
+    </div>
 
     <!-- ─── 6. On-Chain Metadata Schema ──────────────────────────── -->
 
@@ -995,6 +1018,13 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
     regardless of Share A availability. This satisfies the GDPR / Costa Rica Law 8968 right to erasure
     without requiring on-chain data deletion &mdash; the on-chain pointers become meaningless
     without the decryption keys.</p>
+
+    <div class="note note-red">
+      <strong>WARNING &mdash; IRREVERSIBLE:</strong> Crypto-shredding (deleting Share B) is a permanent,
+      unrecoverable operation. All vault objects encrypted under that VMK become permanently inaccessible.
+      Similarly, losing all 3 social recovery sub-shares for Share A is equivalent to crypto-shredding
+      &mdash; there is no backdoor, no master key, and no platform override. This is by design.
+    </div>
 
     <div class="note">
       <strong>Threat model:</strong> An attacker who compromises only the Attestto platform
