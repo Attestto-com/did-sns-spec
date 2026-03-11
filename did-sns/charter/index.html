@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>did:sns — Community Charter</title>
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+    th { font-weight: 600; background: var(--code-bg); }
+    ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.3rem; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../">&larr; Back to specification</a>
+    <h1>Community Charter</h1>
+    <p class="subtitle">did:sns &mdash; An Open Standard for Solana Identity</p>
+
+    <h2>Mission</h2>
+    <p>The <code>did:sns</code> DID method provides a <strong>name-anchored identity layer</strong> for the Solana ecosystem. Unlike account-anchored methods (<code>did:sol</code>), <code>did:sns</code> binds identity to human-readable Solana Name Service (SNS) domains &mdash; making identities portable, resolvable, and bankable.</p>
+    <p>This charter establishes <code>did:sns</code> as an <strong>open standard</strong> governed by the Attestto Identity Standards Group, with contributions welcome from the broader Solana community.</p>
+
+    <h2>Scope</h2>
+    <p>The <code>did:sns</code> specification covers:</p>
+    <ol>
+      <li><strong>DID Syntax</strong> &mdash; <code>did:sns:[network:]&lt;name&gt;.sol</code> identifier format</li>
+      <li><strong>Resolution Algorithm</strong> &mdash; SNS lookup, metadata parsing, SAS attestation follow-through</li>
+      <li><strong>DID Document Structure</strong> &mdash; Verification methods, service endpoints, controller hierarchy</li>
+      <li><strong>On-Chain Metadata</strong> &mdash; v1/v2 binary schema in the SNS data buffer</li>
+      <li><strong>SAS Integration</strong> &mdash; Solana Attestation Service for issuer-signed on-chain claims</li>
+      <li><strong>JSON-LD Context</strong> &mdash; Persistent namespace for semantic interoperability</li>
+    </ol>
+
+    <h3>Out of Scope</h3>
+    <ul>
+      <li>Wallet-specific authentication flows (use <code>did:sol</code> or wallet adapters)</li>
+      <li>Token metadata standards (use Metaplex or Token-2022 metadata)</li>
+      <li>General-purpose attestation schemas (SAS is permissionless)</li>
+      <li>Off-chain credential storage (implementation-specific)</li>
+    </ul>
+
+    <h2>Governance</h2>
+
+    <h3>Roles</h3>
+    <table>
+      <tr><th>Role</th><th>Responsibility</th><th>Current Holder</th></tr>
+      <tr><td>Editor</td><td>Maintains spec, reviews contributions, publishes updates</td><td>Attestto Identity Standards Group</td></tr>
+      <tr><td>Implementer</td><td>Builds conformant resolvers, reports interop results</td><td>Attestto (primary), community (invited)</td></tr>
+      <tr><td>Contributor</td><td>Proposes changes via GitHub issues/PRs</td><td>Open to all</td></tr>
+      <tr><td>Reviewer</td><td>Reviews PRs for spec compliance</td><td>Editor + active contributors</td></tr>
+    </table>
+
+    <h3>Decision Process</h3>
+    <ol>
+      <li><strong>Proposals</strong> &mdash; File a GitHub issue describing the change</li>
+      <li><strong>Discussion</strong> &mdash; 14-day comment period. Editor facilitates</li>
+      <li><strong>Consensus</strong> &mdash; No unresolved objections from active implementers. Backward compatibility analysis required. At least one implementer willing to implement</li>
+      <li><strong>Merge</strong> &mdash; Editor merges the PR and publishes a new spec version</li>
+    </ol>
+
+    <h3>Versioning</h3>
+    <p>The specification follows <a href="https://semver.org/">Semantic Versioning</a>:</p>
+    <ul>
+      <li><strong>MAJOR</strong> &mdash; Breaking changes to DID syntax, resolution, or document structure</li>
+      <li><strong>MINOR</strong> &mdash; New backward-compatible features</li>
+      <li><strong>PATCH</strong> &mdash; Clarifications, typo fixes, editorial improvements</li>
+    </ul>
+    <p>Current version: <strong>v0.3.0</strong> (pre-1.0, specification is evolving)</p>
+
+    <h2>Intellectual Property</h2>
+    <ul>
+      <li>Published under the <a href="https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document">W3C Software and Document License</a></li>
+      <li>Contributors affirm no third-party IP infringement</li>
+      <li>No patent claims asserted against implementations</li>
+      <li>JSON-LD context freely available for any implementer</li>
+    </ul>
+
+    <h2>How to Contribute</h2>
+
+    <h3>Solana Projects (Wallets, DAOs, DeFi)</h3>
+    <ol>
+      <li>Implement a <code>did:sns</code> resolver in your language/framework</li>
+      <li>Submit an implementation report for W3C registry listing</li>
+      <li>Propose extensions via GitHub issues</li>
+      <li>Adopt <code>did:sns</code> alongside <code>did:sol</code> and <code>did:key</code></li>
+    </ol>
+
+    <h3>Banks and Institutional Tenants</h3>
+    <ol>
+      <li>Register a tenant root domain (e.g., <code>crbank.sol</code>)</li>
+      <li>Provision client subdomains (e.g., <code>alice.crbank.sol</code>)</li>
+      <li>Define custom SAS schemas for compliance</li>
+      <li>Report regulatory gaps</li>
+    </ol>
+
+    <h3>Regulators and Auditors</h3>
+    <ol>
+      <li>Review the security and privacy sections</li>
+      <li>Test resolution and verify the cryptographic provenance chain</li>
+      <li>Propose compliance requirements (FATF, GDPR, local laws)</li>
+    </ol>
+
+    <h2>Interoperability Roadmap</h2>
+
+    <h3>Phase 1: Provisional Registration (Current)</h3>
+    <ul>
+      <li>1 conformant implementation (Attestto resolver)</li>
+      <li>W3C DID Spec Registry entry (<code>provisional</code> status)</li>
+      <li>JSON-LD context published and resolvable</li>
+    </ul>
+
+    <h3>Phase 2: Second Implementation</h3>
+    <ul>
+      <li>Universal Resolver Docker driver (DIF infrastructure)</li>
+      <li>2 independent implementations = eligible for <code>registered</code> status</li>
+      <li>W3C DID Resolution Test Suite validation</li>
+    </ul>
+
+    <h3>Phase 3: Ecosystem Adoption</h3>
+    <ul>
+      <li>Solana wallet integrations (Phantom, Backpack, Solflare)</li>
+      <li>SNS marketplace recognition of <code>did:sns</code> metadata</li>
+      <li>Cross-chain resolution bridges</li>
+      <li>Institutional adoption by LATAM banking tenants</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <table>
+      <tr><th>Channel</th><th>Address</th></tr>
+      <tr><td>Standards Group</td><td><a href="mailto:standards@attestto.com">standards@attestto.com</a></td></tr>
+      <tr><td>Specification</td><td><a href="../">spec.attestto.com/did-sns</a></td></tr>
+      <tr><td>GitHub</td><td><a href="https://github.com/Attestto-com">github.com/Attestto-com</a></td></tr>
+    </table>
+
+    <footer>
+      <p>&copy; 2026 Attestto Identity Standards Group &middot; <a href="mailto:standards@attestto.com">standards@attestto.com</a></p>
+    </footer>
+  </div>
+</body>
+</html>

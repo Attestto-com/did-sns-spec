@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>did:sns — Implementation Report</title>
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --pass: #16a34a;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    .pass { color: var(--pass); font-weight: 600; }
+    .summary-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--border); }
+    th { font-weight: 600; background: var(--code-bg); }
+    td:last-child { text-align: center; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="../">&larr; Back to specification</a>
+    <h1>Implementation Report</h1>
+    <p class="subtitle">did:sns DID Method &mdash; Attestto Resolver</p>
+
+    <div class="summary-box">
+      <span class="pass">186 tests passed</span> &middot; 0 failed &middot; 7 services + conformance suite
+    </div>
+
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>DID Method</td><td><code>did:sns</code></td></tr>
+      <tr><td>Implementer</td><td>Attestto S.A. (Costa Rica)</td></tr>
+      <tr><td>Language</td><td>TypeScript (Node.js / AdonisJS)</td></tr>
+      <tr><td>Data Registry</td><td>Solana (SPL Name Service + SAS)</td></tr>
+      <tr><td>Report Date</td><td>2026-03-11</td></tr>
+      <tr><td>Implementation Count</td><td>1 (Universal Resolver driver planned as 2nd)</td></tr>
+    </table>
+
+    <h2>Supporting Services</h2>
+    <table>
+      <tr><th>Service</th><th>Role</th><th style="text-align:center">Tests</th></tr>
+      <tr><td><code>DidSnsResolver</code></td><td>Core DID resolution</td><td>34</td></tr>
+      <tr><td><code>DidSnsMetadataService</code></td><td>On-chain metadata serialization (v1+v2)</td><td>41</td></tr>
+      <tr><td><code>SasAttestationService</code></td><td>SAS attestation CRUD on Solana</td><td>17</td></tr>
+      <tr><td><code>VleiBridgeService</code></td><td>vLEI &rarr; SAS bridge</td><td>36</td></tr>
+      <tr><td><code>UnifiedDidResolver</code></td><td>Multi-method resolver (did:sns + did:web + did:key)</td><td>10</td></tr>
+      <tr><td>Universal Resolver Driver</td><td>Docker driver for DIF Universal Resolver</td><td>13</td></tr>
+      <tr><td>W3C Conformance Suite</td><td>DID Resolution spec conformance (7 sections)</td><td>35</td></tr>
+    </table>
+
+    <h2>DidSnsResolver &mdash; 34 Tests</h2>
+
+    <h3>DID Parsing (10 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>Result</th></tr>
+      <tr><td>1</td><td>Parses standard <code>did:sns:alice.attestto.sol</code></td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>2</td><td>Parses without <code>.sol</code> suffix</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>3</td><td>Parses with network qualifier (<code>did:sns:devnet:...</code>)</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>4</td><td>Parses top-level domain</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>5</td><td>Parses tenant root domain</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>6</td><td>Parses tenant client subdomain</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>7</td><td>Parses flat-namespaced tenant client</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>8</td><td>Rejects invalid prefix</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>9</td><td>Rejects empty name</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>10</td><td>Rejects invalid characters</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>DID Resolution (5 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>W3C Req</th><th>Result</th></tr>
+      <tr><td>11</td><td>Valid DID Document structure</td><td>DID Core &sect;7.1</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>12</td><td>Ed25519 verification method</td><td>DID Core &sect;5.2</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>13</td><td>Authentication + assertion references</td><td>DID Core &sect;5.3</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>14</td><td>Service endpoints (vault, VP, DIDComm)</td><td>DID Core &sect;5.4</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>15</td><td>Document metadata (created, versionId)</td><td>DID Res &sect;4.1</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>Controller Hierarchy (5 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>Result</th></tr>
+      <tr><td>16</td><td>Subdomain controller &rarr; parent</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>17</td><td>Tenant client controller &rarr; tenant root</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>18</td><td>Flat-namespaced &rarr; platform root</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>19</td><td>Tenant root is self-sovereign</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>20</td><td>Top-level domain is self-sovereign</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>Error Handling (3 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>W3C Error</th><th>Result</th></tr>
+      <tr><td>21</td><td><code>INVALID_DID</code> for malformed input</td><td><code>invalidDid</code></td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>22</td><td><code>INVALID_DID</code> for wrong method</td><td><code>invalidDid</code></td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>23</td><td>3-level hierarchy &rarr; <code>NOT_FOUND</code></td><td><code>notFound</code></td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>Network Qualifier (2 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>Result</th></tr>
+      <tr><td>24</td><td>Devnet qualifier preserved in DID</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>25</td><td>Devnet subdomain controller includes network</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>LEI / vLEI Enrichment (4 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>Result</th></tr>
+      <tr><td>26</td><td>LEI adds <code>alsoKnownAs</code> with GLEIF URL</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>27</td><td>LEI adds <code>GleifLookupService</code> endpoint</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>28</td><td>LEI includes SBT and PDA when available</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>29</td><td>Without LEI &mdash; no enrichment</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>SAS Attestation Enrichment (3 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>Result</th></tr>
+      <tr><td>30</td><td><code>sasOverride</code> injects SAS data</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>31</td><td><code>includeSas</code> flag accepted</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>32</td><td><code>SasEnrichment</code> interface shape</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>Class Key Verification (2 tests)</h3>
+    <table>
+      <tr><th>#</th><th>Test</th><th>Result</th></tr>
+      <tr><td>33</td><td>skipOnChain &rarr; null classKey</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>34</td><td>classKey in snsMetadata when present</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h2>DidSnsMetadataService &mdash; 41 Tests</h2>
+    <p>Covers read operations (10), v1 write (8), v2 write (8), roundtrip (4), document verification (4), flag operations (4), constants (3). All <span class="pass">PASS</span>.</p>
+
+    <h2>SasAttestationService &mdash; 17 Tests</h2>
+    <p>Covers enablement checks (8), error handling (4), identity attestation (5). All <span class="pass">PASS</span>.</p>
+
+    <h2>VleiBridgeService &mdash; 36 Tests</h2>
+    <p>Covers bridge lifecycle, SAS mirroring, SNS buffer write (Step 7), and error handling. All <span class="pass">PASS</span>.</p>
+
+    <h2>UnifiedDidResolver &mdash; 10 Tests</h2>
+    <p>Multi-method resolver supporting <code>did:sns</code>, <code>did:web</code>, and <code>did:key</code>. Tests cover method dispatch, fallback handling, and resolution metadata propagation. All <span class="pass">PASS</span>.</p>
+
+    <h2>Universal Resolver Driver &mdash; 13 Tests</h2>
+    <p>Docker-based driver wrapping <code>DidSnsResolver</code> for the DIF Universal Resolver infrastructure. Tests cover HTTP endpoint handling, DID Document response format, error code mapping, and container health checks. All <span class="pass">PASS</span>.</p>
+
+    <h2>W3C Conformance Suite &mdash; 35 Tests</h2>
+    <p>Validates <code>did:sns</code> resolution against the W3C DID Resolution specification across 7 sections: DID syntax, document structure, verification methods, service endpoints, document metadata, error codes, and content-type negotiation. All <span class="pass">PASS</span>.</p>
+
+    <h2>W3C DID Resolution Conformance</h2>
+
+    <h3>Required Error Codes (DID Resolution &sect;4.1.1)</h3>
+    <table>
+      <tr><th>Error Code</th><th>Tested</th><th>Result</th></tr>
+      <tr><td><code>invalidDid</code></td><td>Tests 21, 22</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>notFound</code></td><td>Test 23</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>deactivated</code></td><td>Zero-owner check</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>internalError</code></td><td>Catch-all in resolve()</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>DID Document Structure (DID Core &sect;4)</h3>
+    <table>
+      <tr><th>Requirement</th><th>Tested</th><th>Result</th></tr>
+      <tr><td><code>id</code> matches input DID</td><td>Test 11</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>@context</code> includes DID Core v1</td><td>Test 11</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>verificationMethod</code> array</td><td>Test 12</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>authentication</code> relationship</td><td>Test 13</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>assertionMethod</code> relationship</td><td>Test 13</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>service</code> endpoints</td><td>Test 14</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td><code>controller</code> hierarchy</td><td>Tests 16-20</td><td><span class="pass">PASS</span></td></tr>
+      <tr><td>Content-Type: <code>application/did+ld+json</code></td><td>Test 11</td><td><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h2>Dependencies</h2>
+    <table>
+      <tr><th>Package</th><th>Version</th><th style="text-align:left">Purpose</th></tr>
+      <tr><td><code>@solana/web3.js</code></td><td>^1.98.x</td><td style="text-align:left">Solana RPC, PublicKey, Transaction</td></tr>
+      <tr><td><code>@solana/kit</code></td><td>^2.x</td><td style="text-align:left">Web3.js v2 (SAS service)</td></tr>
+      <tr><td><code>@bonfida/spl-name-service</code></td><td>^3.0.x</td><td style="text-align:left">SNS domain resolution</td></tr>
+      <tr><td><code>sas-lib</code></td><td>^0.x</td><td style="text-align:left">SAS attestation CRUD</td></tr>
+    </table>
+
+    <footer>
+      <p>&copy; 2026 Attestto Identity Standards Group &middot; <a href="mailto:standards@attestto.com">standards@attestto.com</a></p>
+    </footer>
+  </div>
+</body>
+</html>

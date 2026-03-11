@@ -1,0 +1,12 @@
+{
+  "name": "sns",
+  "status": "provisional",
+  "verifiableDataRegistry": "Solana (SPL Name Service)",
+  "specification": "https://spec.attestto.com/did-sns",
+  "implementationCount": 1,
+  "contactName": "Attestto Identity Standards Group",
+  "contactEmail": "standards@attestto.com",
+  "contactWebsite": "https://attestto.com",
+  "jsonLdContext": "https://spec.attestto.com/v1/sns.jsonld",
+  "implementationReport": "https://spec.attestto.com/did-sns/report"
+}

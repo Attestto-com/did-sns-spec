@@ -1,0 +1,214 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "@protected": true,
+
+    "id": "@id",
+    "type": "@type",
+
+    "AttesttoSnsContext": "https://ns.attestto.com/v1/sns#",
+
+    "EncryptedDataVault": {
+      "@id": "AttesttoSnsContext:EncryptedDataVault",
+      "@context": {
+        "@version": 1.1,
+        "@protected": true,
+        "serviceEndpoint": {
+          "@id": "https://www.w3.org/ns/did#serviceEndpoint",
+          "@type": "@id"
+        }
+      }
+    },
+
+    "VerifiablePresentationService": {
+      "@id": "AttesttoSnsContext:VerifiablePresentationService",
+      "@context": {
+        "@version": 1.1,
+        "@protected": true,
+        "serviceEndpoint": {
+          "@id": "https://www.w3.org/ns/did#serviceEndpoint",
+          "@type": "@id"
+        }
+      }
+    },
+
+    "GleifLookupService": {
+      "@id": "AttesttoSnsContext:GleifLookupService",
+      "@context": {
+        "@version": 1.1,
+        "@protected": true,
+        "serviceEndpoint": {
+          "@id": "https://www.w3.org/ns/did#serviceEndpoint"
+        },
+        "lei": {
+          "@id": "AttesttoSnsContext:lei",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "entityName": {
+          "@id": "AttesttoSnsContext:entityName",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "jurisdiction": {
+          "@id": "AttesttoSnsContext:jurisdiction",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "gleifApiUrl": {
+          "@id": "AttesttoSnsContext:gleifApiUrl",
+          "@type": "@id"
+        },
+        "attestationPda": {
+          "@id": "AttesttoSnsContext:attestationPda",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "sbtMintAddress": {
+          "@id": "AttesttoSnsContext:sbtMintAddress",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        }
+      }
+    },
+
+    "snsMetadata": {
+      "@id": "AttesttoSnsContext:snsMetadata",
+      "@context": {
+        "@version": 1.1,
+        "@protected": true,
+        "version": {
+          "@id": "AttesttoSnsContext:metadataVersion",
+          "@type": "http://www.w3.org/2001/XMLSchema#integer"
+        },
+        "active": {
+          "@id": "AttesttoSnsContext:active",
+          "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+        },
+        "hasSbt": {
+          "@id": "AttesttoSnsContext:hasSbt",
+          "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+        },
+        "isTier3": {
+          "@id": "AttesttoSnsContext:isTier3",
+          "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+        },
+        "hasLei": {
+          "@id": "AttesttoSnsContext:hasLei",
+          "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+        },
+        "hasSas": {
+          "@id": "AttesttoSnsContext:hasSas",
+          "@type": "http://www.w3.org/2001/XMLSchema#boolean"
+        },
+        "classKey": {
+          "@id": "AttesttoSnsContext:classKey",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "sbtMintAddress": {
+          "@id": "AttesttoSnsContext:sbtMintAddress",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "sasAttestationUid": {
+          "@id": "AttesttoSnsContext:sasAttestationUid",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "sasAttestation": {
+          "@id": "AttesttoSnsContext:sasAttestation"
+        }
+      }
+    },
+
+    "sasAttestation": {
+      "@id": "AttesttoSnsContext:sasAttestation",
+      "@context": {
+        "@version": 1.1,
+        "@protected": true,
+        "attestationPda": {
+          "@id": "AttesttoSnsContext:attestationPda",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "credential": {
+          "@id": "AttesttoSnsContext:credential",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "schema": {
+          "@id": "AttesttoSnsContext:schema",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "signer": {
+          "@id": "AttesttoSnsContext:signer",
+          "@type": "http://www.w3.org/2001/XMLSchema#string"
+        },
+        "expiry": {
+          "@id": "AttesttoSnsContext:expiry",
+          "@type": "http://www.w3.org/2001/XMLSchema#integer"
+        },
+        "data": {
+          "@id": "AttesttoSnsContext:attestationData",
+          "@context": {
+            "@version": 1.1,
+            "lei_hash": {
+              "@id": "AttesttoSnsContext:leiHash",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "subject_aid": {
+              "@id": "AttesttoSnsContext:subjectAid",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "zkp_proof_hash": {
+              "@id": "AttesttoSnsContext:zkpProofHash",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "role_level": {
+              "@id": "AttesttoSnsContext:roleLevel",
+              "@type": "http://www.w3.org/2001/XMLSchema#integer"
+            },
+            "identity_hash": {
+              "@id": "AttesttoSnsContext:identityHash",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "kyc_level": {
+              "@id": "AttesttoSnsContext:kycLevel",
+              "@type": "http://www.w3.org/2001/XMLSchema#integer"
+            },
+            "kyc_provider": {
+              "@id": "AttesttoSnsContext:kycProvider",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "jurisdiction": {
+              "@id": "AttesttoSnsContext:jurisdiction",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "did_reference": {
+              "@id": "AttesttoSnsContext:didReference",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "verified_at": {
+              "@id": "AttesttoSnsContext:verifiedAt",
+              "@type": "http://www.w3.org/2001/XMLSchema#integer"
+            },
+            "attested_at": {
+              "@id": "AttesttoSnsContext:attestedAt",
+              "@type": "http://www.w3.org/2001/XMLSchema#integer"
+            },
+            "expires_at": {
+              "@id": "AttesttoSnsContext:expiresAt",
+              "@type": "http://www.w3.org/2001/XMLSchema#integer"
+            },
+            "compliance_root": {
+              "@id": "AttesttoSnsContext:complianceRoot",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "custom_pda": {
+              "@id": "AttesttoSnsContext:customPda",
+              "@type": "http://www.w3.org/2001/XMLSchema#string"
+            },
+            "metadata_uri": {
+              "@id": "AttesttoSnsContext:metadataUri",
+              "@type": "@id"
+            }
+          }
+        }
+      }
+    },
+
+    "EcdsaSecp256k1VerificationKey2019": "https://w3id.org/security#EcdsaSecp256k1VerificationKey2019",
+    "publicKeyMultibase": "https://w3id.org/security#publicKeyMultibase"
+  }
+}
