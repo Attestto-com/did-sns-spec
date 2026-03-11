@@ -20,6 +20,7 @@ did:sns:devnet:alice.attestto.sol # Devnet network qualifier
 | Implementation Report | [spec.attestto.com/did-sns/report](https://spec.attestto.com/did-sns/report) |
 | Community Charter | [spec.attestto.com/did-sns/charter](https://spec.attestto.com/did-sns/charter) |
 | JSON-LD Context | [spec.attestto.com/v1/sns.jsonld](https://spec.attestto.com/v1/sns.jsonld) |
+| Credential Schemas | [spec.attestto.com/credentials](https://spec.attestto.com/did-sns/credentials/) |
 | W3C Registry Entry | [sns.json](./sns.json) |
 
 ## Status
@@ -31,6 +32,18 @@ did:sns:devnet:alice.attestto.sol # Devnet network qualifier
 | Implementations | 1 (Attestto resolver) |
 | Test Coverage | 186 tests, 0 failures |
 | Verifiable Data Registry | Solana (SPL Name Service + SAS) |
+
+## Financial Credential Schemas
+
+JSON-LD contexts for W3C Verifiable Credentials in financial compliance workflows, designed for use with `did:sns` identities and SD-JWT selective disclosure.
+
+| Schema | Context URL | Regulatory Alignment |
+|---|---|---|
+| Source of Funds (SoF) | [`/credentials/v1/source-of-funds.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/source-of-funds.jsonld) | FATF R.10, EU AMLD6 Art. 13, CR Law 8204 Art. 16 |
+| Proof of Address (PoA) | [`/credentials/v1/proof-of-address.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/proof-of-address.jsonld) | FATF R.10, EU AMLD6 Art. 13(1)(a), CR SUGEF 12-21 |
+| EDD Clearance | [`/credentials/v1/edd-clearance.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/edd-clearance.jsonld) | FATF R.19, EU AMLD6 Art. 18, CR Law 8204 Art. 17 |
+
+Each schema includes a selective disclosure companion type — verifiers can confirm a user meets a financial threshold or holds a valid EDD clearance without seeing the underlying documents or exact amounts.
 
 ## Key Features
 
