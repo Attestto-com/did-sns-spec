@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>did:sns — DID Method Specification</title>
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: var(--code-bg);
+      padding: 1rem 1.25rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    pre code { background: none; padding: 0; }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    .badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2em 0.6em;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+    th { font-weight: 600; background: var(--code-bg); }
+    ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.3rem; }
+    .nav { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+    .nav a {
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .nav a:hover { border-color: var(--accent); text-decoration: none; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="https://attestto.com">&larr; attestto.com</a> &nbsp;&middot;&nbsp; <a class="back" href="../">Full Specification</a> &nbsp;&middot;&nbsp; <a class="back" href="../../">All Specs</a>
+    <h1>did:sns <span class="badge">Provisional</span></h1>
+    <p class="subtitle">DID Method Specification &mdash; Quick Overview</p>
+
+    <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: 0.9rem;">
+      This is the <strong>quick overview</strong>. For the complete specification with CRUD operations, architecture diagrams, and detailed examples, see the <a href="../"><strong>Full Specification</strong></a>.
+    </div>
+
+    <nav class="nav">
+      <a href="#syntax">Syntax</a>
+      <a href="#resolution">Resolution</a>
+      <a href="#document">DID Document</a>
+      <a href="#metadata">On-Chain Metadata</a>
+      <a href="#security">Security</a>
+      <a href="../report/">Implementation Report</a>
+      <a href="../charter/">Community Charter</a>
+      <a href="../ip-affirmation/">IP Affirmation</a>
+    </nav>
+
+    <h2 id="overview">Overview</h2>
+    <p>The <code>did:sns</code> method binds W3C Decentralized Identifiers to human-readable
+    <a href="https://sns.id">Solana Name Service</a> (SNS) domains. Unlike account-anchored methods,
+    <code>did:sns</code> provides name-portable, hierarchically-controlled identities suitable for
+    institutional and consumer use cases.</p>
+
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Method Name</td><td><code>sns</code></td></tr>
+      <tr><td>Status</td><td>Provisional</td></tr>
+      <tr><td>Verifiable Data Registry</td><td>Solana (SPL Name Service + SAS)</td></tr>
+      <tr><td>Specification Version</td><td>v0.3.0</td></tr>
+      <tr><td>Editor</td><td>Attestto Identity Standards Group</td></tr>
+    </table>
+
+    <h2 id="syntax">1. DID Syntax</h2>
+    <p>The <code>did:sns</code> identifier follows the W3C DID Syntax (§3.1):</p>
+    <pre><code>did:sns:[network:]&lt;name&gt;.sol</code></pre>
+
+    <h3>Examples</h3>
+    <pre><code>did:sns:attestto.sol                  # Platform root domain
+did:sns:alice.attestto.sol            # Subdomain (platform-issued)
+did:sns:crbank.sol                    # Tenant root domain
+did:sns:alice.crbank.sol              # Tenant client subdomain
+did:sns:crbank-alice.attestto.sol     # Flat-namespaced tenant client
+did:sns:devnet:alice.attestto.sol     # Devnet network qualifier</code></pre>
+
+    <h3>ABNF Grammar</h3>
+    <pre><code>did-sns         = "did:sns:" [ network ":" ] sns-name
+network         = "mainnet-beta" / "devnet" / "testnet"
+sns-name        = label *( "." label ) ".sol"
+label           = 1*( ALPHA / DIGIT / "-" )</code></pre>
+    <p>When the <code>network</code> component is omitted, <code>mainnet-beta</code> is assumed.</p>
+
+    <h2 id="resolution">2. Resolution Algorithm</h2>
+    <ol>
+      <li><strong>Parse</strong> the DID identifier. Validate syntax against the ABNF grammar.</li>
+      <li><strong>Derive</strong> the Solana PDA via the SPL Name Service program
+        (<code>namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX</code>).
+        For subdomains, derive parent PDA first, then child PDA with parent as seed.</li>
+      <li><strong>Fetch</strong> the account via Solana RPC. Read the NameRegistry header:
+        parent key (32 bytes), owner key (32 bytes), class key (32 bytes).</li>
+      <li><strong>Check deactivation</strong>: if owner is the system program (all zeros), return
+        <code>deactivated: true</code> in document metadata.</li>
+      <li><strong>Read metadata</strong> from the data buffer. Check for magic bytes <code>0x44494401</code>
+        at offset 96. Parse v1 or v2 schema.</li>
+      <li><strong>Follow SAS</strong>: if the <code>HAS_SAS</code> flag (0x10) is set and a SAS attestation
+        UID is present (v2), fetch the attestation from the Solana Attestation Service for enrichment.</li>
+      <li><strong>Construct</strong> the DID Document with verification methods, service endpoints,
+        controller hierarchy, and optional LEI/vLEI enrichment.</li>
+    </ol>
+
+    <h3>Error Codes</h3>
+    <table>
+      <tr><th>Code</th><th>Condition</th></tr>
+      <tr><td><code>invalidDid</code></td><td>Malformed syntax, wrong method prefix, empty name, invalid characters</td></tr>
+      <tr><td><code>notFound</code></td><td>SNS domain not registered, account does not exist</td></tr>
+      <tr><td><code>deactivated</code></td><td>Owner is the system program (zero address)</td></tr>
+      <tr><td><code>internalError</code></td><td>RPC failure or unexpected resolver error</td></tr>
+    </table>
+
+    <h2 id="document">3. DID Document Structure</h2>
+    <p>A resolved <code>did:sns</code> document conforms to W3C DID Core §4:</p>
+    <pre><code>{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/ed25519-2020/v1",
+    "https://spec.attestto.com/v1/sns.jsonld"
+  ],
+  "id": "did:sns:alice.attestto.sol",
+  "controller": "did:sns:attestto.sol",
+  "verificationMethod": [{
+    "id": "did:sns:alice.attestto.sol#owner",
+    "type": "Ed25519VerificationKey2020",
+    "controller": "did:sns:alice.attestto.sol",
+    "publicKeyMultibase": "z6Mk..."
+  }],
+  "authentication": ["did:sns:alice.attestto.sol#owner"],
+  "assertionMethod": ["did:sns:alice.attestto.sol#owner"],
+  "service": [
+    {
+      "id": "did:sns:alice.attestto.sol#vault",
+      "type": "EncryptedDataVault",
+      "serviceEndpoint": "https://vault.attestto.com/v1/alice.attestto.sol"
+    },
+    {
+      "id": "did:sns:alice.attestto.sol#vp",
+      "type": "VerifiablePresentationService",
+      "serviceEndpoint": "https://vp.attestto.com/v1/alice.attestto.sol"
+    },
+    {
+      "id": "did:sns:alice.attestto.sol#didcomm",
+      "type": "DIDCommMessaging",
+      "serviceEndpoint": "https://didcomm.attestto.com/v1/alice.attestto.sol"
+    }
+  ]
+}</code></pre>
+
+    <h3>Controller Hierarchy</h3>
+    <table>
+      <tr><th>Domain Type</th><th>Controller</th></tr>
+      <tr><td>Top-level (<code>attestto.sol</code>)</td><td>Self-sovereign (no controller)</td></tr>
+      <tr><td>Tenant root (<code>crbank.sol</code>)</td><td>Self-sovereign (no controller)</td></tr>
+      <tr><td>Subdomain (<code>alice.attestto.sol</code>)</td><td><code>did:sns:attestto.sol</code></td></tr>
+      <tr><td>Tenant client (<code>alice.crbank.sol</code>)</td><td><code>did:sns:crbank.sol</code></td></tr>
+      <tr><td>Flat-namespaced (<code>crbank-alice.attestto.sol</code>)</td><td><code>did:sns:attestto.sol</code></td></tr>
+    </table>
+
+    <h2 id="metadata">4. On-Chain Metadata Schema</h2>
+    <p>DID metadata is stored in the SNS account data buffer, following the NameRegistry header (96 bytes).
+    The schema is identified by magic bytes <code>0x44494401</code> ("DID\x01").</p>
+
+    <h3>v2 Layout (current, 135 bytes)</h3>
+    <table>
+      <tr><th>Offset</th><th>Size</th><th>Field</th></tr>
+      <tr><td>0</td><td>4</td><td>Magic bytes (<code>0x44494401</code>)</td></tr>
+      <tr><td>4</td><td>1</td><td>Schema version (2)</td></tr>
+      <tr><td>5</td><td>1</td><td>Flags (ACTIVE, HAS_SBT, IS_TIER3, HAS_LEI, HAS_SAS)</td></tr>
+      <tr><td>6</td><td>32</td><td>SAS attestation UID</td></tr>
+      <tr><td>38</td><td>33</td><td>ECIES public key (compressed secp256k1)</td></tr>
+      <tr><td>71</td><td>32</td><td>Vault endpoint hash (SHA-256)</td></tr>
+      <tr><td>103</td><td>32</td><td>DID Document hash (SHA-256)</td></tr>
+    </table>
+
+    <h3>Flags</h3>
+    <table>
+      <tr><th>Bit</th><th>Flag</th><th>Meaning</th></tr>
+      <tr><td>0x01</td><td><code>ACTIVE</code></td><td>Domain is active</td></tr>
+      <tr><td>0x02</td><td><code>HAS_SBT</code></td><td>Soul-Bound Token minted</td></tr>
+      <tr><td>0x04</td><td><code>IS_TIER3</code></td><td>Self-Sovereign ID (Attestto SSID)</td></tr>
+      <tr><td>0x08</td><td><code>HAS_LEI</code></td><td>LEI/vLEI credential linked</td></tr>
+      <tr><td>0x10</td><td><code>HAS_SAS</code></td><td>SAS attestation linked</td></tr>
+    </table>
+
+    <h2 id="security">5. Security Considerations</h2>
+    <ul>
+      <li><strong>No PII on-chain.</strong> All personal data is stored in encrypted Data Vaults.
+        On-chain stores only an <code>identity_hash</code> (SHA-256 commitment).</li>
+      <li><strong>Class Key lock.</strong> Platform-issued subdomains are created with
+        <code>nameClass = Platform Authority</code>, providing cryptographic proof of issuance.</li>
+      <li><strong>Bidirectional linking.</strong> SNS&#8594;SAS (via <code>HAS_SAS</code> flag +
+        attestation UID) and SAS&#8594;SNS (via <code>did_reference</code> field) prevents attestation spoofing.</li>
+      <li><strong>Deactivation detection.</strong> Zero-owner check returns <code>deactivated: true</code>
+        in document metadata.</li>
+    </ul>
+
+    <h2 id="privacy">6. Privacy Considerations</h2>
+    <ul>
+      <li><strong>Selective disclosure.</strong> SD-JWT (RFC 9449) enables per-field disclosure with salted hashes.</li>
+      <li><strong>ZKP predicates.</strong> BBS+ signatures for unlinkable proofs (age verification, country membership).</li>
+      <li><strong>Consent-gated access.</strong> 2-of-2 Shamir key-splitting for Tier 3 credentials.</li>
+      <li><strong>GDPR compatibility.</strong> Right to erasure satisfied by deleting vault content
+        (on-chain pointer becomes meaningless).</li>
+    </ul>
+
+    <h2>7. References</h2>
+    <ul>
+      <li><a href="https://www.w3.org/TR/did-core/">W3C DID Core v1.0</a></li>
+      <li><a href="https://www.w3.org/TR/did-spec-registries/">W3C DID Spec Registries</a></li>
+      <li><a href="https://w3c-ccg.github.io/did-resolution/">DID Resolution v0.3</a></li>
+      <li><a href="https://spl.solana.com/name-service">Solana SPL Name Service</a></li>
+      <li><a href="https://docs.solanaattestation.com/">Solana Attestation Service (SAS)</a></li>
+    </ul>
+
+    <footer>
+      <p>&copy; 2026 Attestto Identity Standards Group &middot; <a href="mailto:standards@attestto.com">standards@attestto.com</a></p>
+      <p>Published under the <a href="https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document">W3C Software and Document License</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>
