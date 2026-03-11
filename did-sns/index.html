@@ -607,6 +607,67 @@ attestto.sol                    &rarr; Platform Authority
       Only the verification methods change. This is a key advantage over account-anchored methods.
     </div>
 
+    <h3>Transfer Security Model</h3>
+    <p>A domain transfer (key rotation) changes the controlling key but does <strong>not</strong>
+    retroactively invalidate signatures made under the previous key. This has important
+    implications for contracts, credentials, and attestations:</p>
+
+    <div class="ascii">Timeline:
+                                      Transfer
+Key A (original owner)                event                Key B (new owner)
+--------[=========================]----||----[=========================]--------
+        ^                        ^    ||    ^                         ^
+    Signs doc #1            Signs doc #2    Signs doc #3          Signs doc #4
+    (valid forever)         (valid forever) (valid, new key)      (valid, new key)
+                                      ||
+                                      || DID Document now shows Key B
+                                      || Key A is no longer resolvable
+                                      || via current DID resolution</div>
+
+    <table>
+      <tr><th>Asset</th><th>Effect of Transfer</th><th>Implication</th></tr>
+      <tr>
+        <td><strong>Old signatures</strong></td>
+        <td>Mathematically valid, but Key A is no longer in the DID Document</td>
+        <td>Verifiers resolving the DID <em>today</em> cannot verify old signatures without historical key lookup</td>
+      </tr>
+      <tr>
+        <td><strong>SAS attestations</strong></td>
+        <td>Unaffected &mdash; signed by the <em>issuer</em> authority, not the domain owner</td>
+        <td>Attestations survive domain transfers. Issuer can independently revoke.</td>
+      </tr>
+      <tr>
+        <td><strong>SBT (Soulbound Token)</strong></td>
+        <td>Stays with the <em>old wallet</em> (non-transferable by definition)</td>
+        <td>Domain transfer creates a mismatch: DID points to Key B, SBT remains on Key A&rsquo;s wallet. Issuer must mint a new SBT for Key B.</td>
+      </tr>
+      <tr>
+        <td><strong>Smart contracts</strong></td>
+        <td>Contracts referencing the DID identifier still resolve, but to Key B</td>
+        <td>The controlling party changes. Contracts should verify the <em>key</em>, not just the DID, for authorization checks.</td>
+      </tr>
+      <tr>
+        <td><strong>Encrypted vault objects</strong></td>
+        <td>VMK shares remain with the original holder (Share A) and platform (Share B)</td>
+        <td>Transfer does not grant the new owner access to encrypted data. Re-encryption under a new VMK is required for handover.</td>
+      </tr>
+    </table>
+
+    <h4>Versioned Resolution</h4>
+    <p>To verify signatures made under a previous key, verifiers SHOULD use
+    <code>didDocumentMetadata.versionId</code> to request the DID Document at the
+    time of signing. The resolver MAY support a <code>versionTime</code> query parameter
+    (per <a href="https://www.w3.org/TR/did-core/#did-parameters">DID Core &sect;3.2.1</a>)
+    to return the historical document state. Without versioned resolution, old signatures
+    become unverifiable through the DID layer alone.</p>
+
+    <div class="note">
+      <strong>Recommendation for contracts and legal documents:</strong> When signing
+      legally binding documents, embed the signer&rsquo;s public key (not just the DID)
+      in the signature metadata. This ensures the signature remains independently verifiable
+      even after domain transfers, without depending on historical DID resolution.
+    </div>
+
     <h3 id="op-deactivate">5.4 Deactivate</h3>
     <p>A DID is deactivated by transferring ownership to the system program (all-zero address):</p>
     <pre><code>{
