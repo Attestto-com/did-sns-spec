@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attestto ID — Tiered Identity Credential</title>
+  <meta name="description" content="Attestto ID is a tiered identity credential anchored to did:sns. Platform-verified at Tier 1-2, self-sovereign with soulbound tokens at Tier 3.">
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+    th { font-weight: 600; background: var(--code-bg); }
+    ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.3rem; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    .ascii {
+      background: var(--code-bg);
+      padding: 1.25rem 1.5rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-bottom: 1.25rem;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      white-space: pre;
+    }
+    .note {
+      background: #eff6ff;
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+    }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="https://attestto.com">&larr; attestto.com</a> &nbsp;&middot;&nbsp; <a class="back" href="../did-sns/">did:sns Specification</a> &nbsp;&middot;&nbsp; <a class="back" href="../">All Specs</a>
+    <h1>Attestto ID</h1>
+    <p class="subtitle">Tiered Identity Credential &mdash; anchored to <code>did:sns</code></p>
+
+    <h2>1. Overview</h2>
+    <p>Attestto ID is a progressive identity credential that starts as a platform-verified record and can be upgraded to a fully self-sovereign, on-chain identity. It is anchored to a <a href="../did-sns/"><code>did:sns</code></a> decentralized identifier and uses the <a href="https://github.com/Attestto-com/vLei-Solana-Bridge">vLEI Solana Bridge</a> for on-chain attestation.</p>
+
+    <p>The credential follows a tiered model where each tier adds stronger guarantees without breaking backward compatibility:</p>
+
+    <div class="ascii">Tier 1 (Platform)          Tier 2 (Wallet)             Tier 3 (Self-Sovereign)
++----------------------+   +-------------------------+   +-----------------------------+
+| Platform DB record   |   | + Wallet attestation    |   | + Soulbound Token (SBT)     |
+| KYC-verified claims  |   |   (wallet belongs to    |   |   minted on Solana          |
+| did:sns identifier   |   |    Attestto ID holder)  |   | + Dual-key encrypted proofs |
+| Platform-mediated    |   | + Platform-mediated     |   |   (2-of-2 Shamir)           |
+|   proof resolution   |   |   proof resolution      |   | + Consent-gated access      |
++----------------------+   +-------------------------+   +-----------------------------+</div>
+
+    <h2>2. Credential Tiers</h2>
+
+    <h3>Tier 1 &mdash; Platform-Anchored</h3>
+    <p>The identity exists as a platform database record. Claims are KYC-verified and resolved through the Attestto platform. The holder is assigned a <code>did:sns</code> identifier but does not yet have on-chain presence.</p>
+    <table>
+      <tr><th>Property</th><th>Value</th></tr>
+      <tr><td>Storage</td><td>Platform database only</td></tr>
+      <tr><td>Proof resolution</td><td>Platform-mediated API</td></tr>
+      <tr><td>DID identifier</td><td><code>did:sns:&lt;domain&gt;.&lt;user&gt;</code></td></tr>
+      <tr><td>On-chain presence</td><td>None</td></tr>
+      <tr><td>Revocation</td><td>Platform-controlled</td></tr>
+    </table>
+
+    <h3>Tier 2 &mdash; Wallet-Attested</h3>
+    <p>Extends Tier 1 with a wallet attestation: an intermediate credential that proves the wallet belongs to the Attestto ID holder. Proof resolution remains platform-mediated, but the wallet binding adds cryptographic anchoring.</p>
+    <table>
+      <tr><th>Property</th><th>Value</th></tr>
+      <tr><td>Storage</td><td>Platform DB + wallet attestation</td></tr>
+      <tr><td>Proof resolution</td><td>Platform-mediated API</td></tr>
+      <tr><td>Wallet binding</td><td>Attestation PDA linking wallet to identity</td></tr>
+      <tr><td>On-chain presence</td><td>Attestation only (no token)</td></tr>
+      <tr><td>Revocation</td><td>Platform-controlled + attestation revocable</td></tr>
+    </table>
+
+    <h3>Tier 3 &mdash; Self-Sovereign (Attestto SSID)</h3>
+    <p>Full self-sovereign identity. A non-transferable Soulbound Token (SBT) is minted on Solana via the <a href="https://github.com/Attestto-com/vLei-Solana-Bridge">vLEI Solana Bridge</a>. Proofs are dual-key encrypted using 2-of-2 Shamir secret sharing, and access is consent-gated.</p>
+    <table>
+      <tr><th>Property</th><th>Value</th></tr>
+      <tr><td>Storage</td><td>On-chain SBT + encrypted vault</td></tr>
+      <tr><td>Proof resolution</td><td>Consent-gated, holder-controlled</td></tr>
+      <tr><td>Token</td><td>Token-2022 SBT (non-transferable, revocable)</td></tr>
+      <tr><td>Encryption</td><td>2-of-2 Shamir: User Share A (Vault Extension) + Attestto Share B (PII Vault)</td></tr>
+      <tr><td>Revocation</td><td><a href="../did-sns/#bitstring-status-list">W3C Bitstring Status List</a> + on-chain revocation</td></tr>
+      <tr><td>Attestto dependency</td><td>Co-signer only (Share B)</td></tr>
+    </table>
+
+    <div class="note">
+      <strong>Progressive upgrade:</strong> A Tier 1 credential can be upgraded to Tier 2 or Tier 3 at any time. The <code>did:sns</code> identifier remains the same across all tiers. The SNS data buffer flags (<code>HAS_SBT</code>, <code>IS_TIER3</code>) reflect the current tier on-chain.
+    </div>
+
+    <h2>3. Architecture</h2>
+
+    <div class="ascii">+------------------+       +--------------------+       +---------------------+
+|   Attestto ID    |       |   did:sns Domain    |       |   Solana On-Chain   |
+|   (Platform)     |       |   (Name Service)    |       |   (SAS + SBT)       |
++------------------+       +--------------------+       +---------------------+
+| KYC claims       |------>| SNS data buffer    |------>| SAS Attestation PDA |
+| Verified email   |       |   Magic + Flags    |       |   lei_hash          |
+| Role / org       |       |   SAS UID pointer  |       |   role_level        |
+| Jurisdiction     |       |   ECIES public key |       |   jurisdiction      |
++------------------+       +--------------------+       |   zkp_proof_hash    |
+                                                        |   tokenAccount(SBT) |
+                                                        +---------------------+</div>
+
+    <h3>Selective Disclosure</h3>
+    <p>Attestto ID credentials support per-field selective disclosure using <a href="https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-13.html">SD-JWT (RFC 9449)</a>. Each attribute is individually salted and hashed, allowing the holder to reveal only the claims required by a verifier.</p>
+
+    <h3>Dual-Key Encryption (Tier 3)</h3>
+    <p>At Tier 3, proof payloads are encrypted with AES-256-GCM. The content encryption key (CEK) is split using 2-of-2 Shamir XOR:</p>
+    <ul>
+      <li><strong>Share A</strong> &mdash; held by the user in the Vault browser extension</li>
+      <li><strong>Share B</strong> &mdash; held by Attestto in the PII Vault (KEK-wrapped)</li>
+    </ul>
+    <p>Both shares must combine to reconstruct the CEK. Neither party can decrypt alone. Crypto-shredding (deleting Share B) renders all encrypted objects permanently inaccessible.</p>
+
+    <h3>Social Recovery (Tier 3)</h3>
+    <p>Share A is further protected with 2-of-3 Shamir recovery: device sub-share, cloud backup sub-share, and guardian sub-share. Any two of three can reconstruct Share A if the primary device is lost.</p>
+
+    <h2>4. On-Chain Representation</h2>
+
+    <h3>SNS Data Buffer Flags</h3>
+    <table>
+      <tr><th>Bit</th><th>Flag</th><th>Meaning</th></tr>
+      <tr><td><code>0x01</code></td><td><code>HAS_SAS</code></td><td>SAS attestation linked</td></tr>
+      <tr><td><code>0x02</code></td><td><code>HAS_SBT</code></td><td>Soulbound Token minted (Tier 3)</td></tr>
+      <tr><td><code>0x04</code></td><td><code>IS_TIER3</code></td><td>Self-Sovereign ID tier active</td></tr>
+      <tr><td><code>0x08</code></td><td><code>HAS_LEI</code></td><td>LEI/vLEI credential linked</td></tr>
+      <tr><td><code>0x10</code></td><td><code>HAS_ECIES</code></td><td>ECIES encryption key published</td></tr>
+    </table>
+
+    <h3>SBT Token (Token-2022)</h3>
+    <p>The Soulbound Token is minted via the <a href="https://github.com/Attestto-com/vLei-Solana-Bridge">vLEI Solana Bridge</a> program using Solana Token-2022 with the non-transferable extension. The token:</p>
+    <ul>
+      <li>Is non-transferable (cannot be sent to another wallet)</li>
+      <li>Is revocable by the issuer authority</li>
+      <li>References the SAS attestation PDA for verifiable claims</li>
+      <li>Uses <a href="https://github.com/Attestto-com/sovereign-pass-metadata">on-chain metadata</a> conforming to the Metaplex token standard</li>
+    </ul>
+
+    <h2>5. Verification</h2>
+    <p>A verifier resolves an Attestto ID through the following chain:</p>
+    <ol>
+      <li>Resolve <code>did:sns:&lt;domain&gt;</code> via the <a href="https://github.com/Attestto-com/did-sns-resolver">DID Resolver</a></li>
+      <li>Read the SNS data buffer flags to determine the credential tier</li>
+      <li>If <code>HAS_SAS</code>: follow the SAS UID to the attestation PDA, verify the issuer signature</li>
+      <li>If <code>HAS_SBT</code>: verify the Token-2022 account exists, is non-transferable, and matches the attestation</li>
+      <li>For selective disclosure: request an SD-JWT presentation, verify disclosed claims against the attestation hash</li>
+    </ol>
+
+    <h2>6. Compliance</h2>
+    <table>
+      <tr><th>Requirement</th><th>How Attestto ID addresses it</th></tr>
+      <tr><td>GDPR / Costa Rica Law 8968 (Protecci&oacute;n de la Persona Frente al Tratamiento de sus Datos Personales)</td><td>No PII on-chain. Dual-key Shamir vault. Crypto-shredding for right-to-erasure.</td></tr>
+      <tr><td>FATF Travel Rule / ISO 20022</td><td>SAS attestation provides issuer-signed identity proof for counterparty verification.</td></tr>
+      <tr><td>W3C DID v1.1</td><td>Anchored to <code>did:sns</code>, a W3C-conformant DID method.</td></tr>
+      <tr><td>GLEIF vLEI</td><td>LEI hash stored in attestation. vLEI bridge provides on-chain LEI verification via ZKP.</td></tr>
+    </table>
+
+    <h2>7. Related Resources</h2>
+    <ul>
+      <li><a href="../did-sns/">did:sns Method Specification</a></li>
+      <li><a href="https://github.com/Attestto-com/vLei-Solana-Bridge">vLEI Solana Bridge</a> &mdash; on-chain attestation program</li>
+      <li><a href="https://github.com/Attestto-com/sovereign-pass-metadata">SBT Token Metadata</a></li>
+      <li><a href="https://github.com/Attestto-com/did-sns-resolver">DID Resolver</a> &mdash; Universal Resolver driver</li>
+      <li><a href="../did-sns/ip-affirmation/">IP Affirmation</a></li>
+    </ul>
+
+    <footer>
+      <p>&copy; 2026 Attestto Identity Standards Group &middot; <a href="mailto:standards@attestto.com">standards@attestto.com</a></p>
+      <p>Published under the <a href="https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document">W3C Software and Document License</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>
