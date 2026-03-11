@@ -149,6 +149,7 @@
         <li><a href="#metadata">On-Chain Metadata Schema</a></li>
         <li><a href="#sas">SAS Integration (Proof Layer)</a></li>
         <li><a href="#security">Security Considerations</a></li>
+        <li><a href="#pqc">Post-Quantum Cryptography Migration</a></li>
         <li><a href="#privacy">Privacy Considerations</a></li>
         <li><a href="#references">References</a></li>
       </ol>
@@ -513,7 +514,9 @@ attestto.sol                    &rarr; Platform Authority
   2.  Strip ".sol" suffix if present
   3.  Validate hierarchy depth (max 2 levels)
   4.  Hash domain: SHA-256("SPL Name Service" + name)
-  5.  Derive PDA: FindProgramAddress([hash, TLD_PARENT], SNS_PROGRAM)
+  5.  Derive PDA: FindProgramAddress([hash, classKey, parent], SNS_PROGRAM)
+      &bull; classKey = 32 zero bytes for standard domains (no class lock)
+      &bull; parent = ROOT_DOMAIN_ACCOUNT (58PwtjS...) for top-level domains
       &bull; For subdomains: derive parent PDA first, then child with \0 prefix
   6.  Fetch AccountInfo from Solana RPC
   7.  If not found &rarr; return notFound error
@@ -558,8 +561,9 @@ attestto.sol                    &rarr; Platform Authority
 
         <!-- PDA detail -->
         <rect x="15" y="110" width="370" height="55" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
-        <text x="30" y="130" font-size="10.5" fill="#64748b" font-family="monospace">Root:  hash = SHA-256("SPL Name Service" + name)</text>
-        <text x="30" y="148" font-size="10.5" fill="#64748b" font-family="monospace">Sub:   parentPDA = derive(parent) &rarr; hash("\0" + sub)</text>
+        <text x="30" y="128" font-size="10.5" fill="#64748b" font-family="monospace">Root:  hash = SHA-256("SPL Name Service" + name)</text>
+        <text x="30" y="143" font-size="10.5" fill="#64748b" font-family="monospace">Seeds: [hash, classKey(32 zeros), ROOT_DOMAIN]</text>
+        <text x="30" y="158" font-size="10.5" fill="#64748b" font-family="monospace">Sub:   parentPDA = derive(parent) then hash("\0" + sub)</text>
 
         <defs>
           <marker id="ra1" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><path d="M0,0 L7,2.5 L0,5 Z" fill="#4f46e5"/></marker>
@@ -722,7 +726,96 @@ attestto.sol                    &rarr; Platform Authority
         someone compromises the SNS domain, they cannot forge the issuer-signed attestation.</li>
       <li><strong>Subdomain isolation.</strong> Each subdomain is a separate on-chain account.
         Compromising one subdomain does not affect siblings or the parent domain.</li>
+      <li><strong>Post-quantum readiness.</strong> Current verification methods (Ed25519, secp256k1)
+        are vulnerable to cryptographically-relevant quantum computers. See
+        <a href="#pqc">&sect;8.1 Post-Quantum Cryptography Migration</a> for the transition plan.</li>
     </ul>
+
+    <!-- ─── 8.1 Post-Quantum Cryptography Migration ─────────────── -->
+
+    <h2 id="pqc">8.1 Post-Quantum Cryptography Migration</h2>
+
+    <p>The current <code>did:sns</code> verification methods rely on Ed25519 (signatures) and
+    secp256k1 (ECIES encryption), both of which are vulnerable to Shor&rsquo;s algorithm
+    on a cryptographically-relevant quantum computer (CRQC). This section defines
+    the migration path to NIST post-quantum standards.</p>
+
+    <h3>Threat Model</h3>
+    <table>
+      <tr><th>Asset</th><th>Current Algorithm</th><th>Quantum Threat</th><th>Target Algorithm</th></tr>
+      <tr><td>DID authentication</td><td>Ed25519 (RFC 8032)</td><td>Shor&rsquo;s &mdash; key recovery</td><td>ML-DSA-44 (FIPS 204)</td></tr>
+      <tr><td>VP encryption</td><td>ECIES secp256k1</td><td>Shor&rsquo;s &mdash; key recovery</td><td>ML-KEM-768 (FIPS 203)</td></tr>
+      <tr><td>Vault CEK wrapping</td><td>AES-256-GCM</td><td>Grover&rsquo;s &mdash; halved security</td><td>AES-256-GCM (128-bit post-quantum security, sufficient)</td></tr>
+      <tr><td>Blind indexes</td><td>HMAC-SHA256</td><td>Grover&rsquo;s &mdash; halved security</td><td>HMAC-SHA256 (128-bit post-quantum security, sufficient)</td></tr>
+      <tr><td>SAS attestation signatures</td><td>Ed25519</td><td>Shor&rsquo;s &mdash; key recovery</td><td>ML-DSA-44 (FIPS 204)</td></tr>
+    </table>
+
+    <div class="note">
+      <strong>Note:</strong> AES-256 and HMAC-SHA256 provide 128-bit security against Grover&rsquo;s
+      algorithm, which is considered sufficient. No migration is required for symmetric primitives.
+      The urgent migration targets are asymmetric operations: signatures and key exchange.
+    </div>
+
+    <h3>New Verification Method Types</h3>
+    <table>
+      <tr><th>Key ID Suffix</th><th>Type</th><th>Purpose</th><th>Public Key Size</th></tr>
+      <tr><td><code>#pq-auth-key</code></td><td><code>MlDsa44VerificationKey2025</code></td><td>Post-quantum authentication and signing</td><td>1,312 bytes</td></tr>
+      <tr><td><code>#pq-kem-key</code></td><td><code>MlKem768VerificationKey2025</code></td><td>Post-quantum key encapsulation for VP encryption</td><td>1,184 bytes</td></tr>
+    </table>
+
+    <h3>Migration Strategy: Hybrid Mode</h3>
+    <p>During the transition period, <code>did:sns</code> supports <strong>hybrid verification</strong> &mdash;
+    both classical and post-quantum keys coexist in the DID Document. Verifiers SHOULD accept
+    either key type; issuers SHOULD sign with both until the classical sunset date.</p>
+
+    <div class="ascii">Phase 1 (Current)        Phase 2 (Hybrid)              Phase 3 (PQ-Only)
++--------------------+   +---------------------------+   +--------------------+
+| #solana-key        |   | #solana-key (Ed25519)     |   | #pq-auth-key       |
+|   Ed25519          |   | #pq-auth-key (ML-DSA-44)  |   |   ML-DSA-44        |
+| #ecies-key         |   | #ecies-key (secp256k1)    |   | #pq-kem-key        |
+|   secp256k1        |   | #pq-kem-key (ML-KEM-768)  |   |   ML-KEM-768       |
++--------------------+   +---------------------------+   +--------------------+
+                          Dual signatures required         Classical keys removed</div>
+
+    <h3>On-Chain Storage</h3>
+    <p>ML-DSA-44 public keys (1,312 bytes) and ML-KEM-768 keys (1,184 bytes) exceed
+    the SNS data buffer capacity. Post-quantum keys are stored in the <strong>SAS attestation
+    layer</strong>, not the SNS data buffer:</p>
+    <ul>
+      <li>A new <code>HAS_PQ</code> flag (bit <code>0x20</code>) in the SNS data buffer signals
+        that PQ verification methods exist</li>
+      <li>The SAS attestation includes <code>pq_auth_key</code> and <code>pq_kem_key</code>
+        fields in its Borsh-serialized data payload</li>
+      <li>The resolver, upon seeing <code>HAS_PQ</code>, fetches the SAS attestation
+        and adds the PQ verification methods to the DID Document</li>
+    </ul>
+
+    <h3>SNS Data Buffer Flags (Updated)</h3>
+    <table>
+      <tr><th>Bit</th><th>Flag</th><th>Meaning</th></tr>
+      <tr><td><code>0x01</code></td><td><code>HAS_SAS</code></td><td>SAS attestation linked</td></tr>
+      <tr><td><code>0x02</code></td><td><code>HAS_SBT</code></td><td>Soul-Bound Token minted</td></tr>
+      <tr><td><code>0x04</code></td><td><code>IS_TIER3</code></td><td>Self-Sovereign ID tier</td></tr>
+      <tr><td><code>0x08</code></td><td><code>HAS_LEI</code></td><td>LEI/vLEI credential linked</td></tr>
+      <tr><td><code>0x10</code></td><td><code>HAS_ECIES</code></td><td>ECIES encryption key published</td></tr>
+      <tr><td><code>0x20</code></td><td><code>HAS_PQ</code></td><td>Post-quantum keys in SAS attestation</td></tr>
+    </table>
+
+    <h3>Timeline</h3>
+    <table>
+      <tr><th>Phase</th><th>Trigger</th><th>Action</th></tr>
+      <tr><td><strong>Phase 1</strong> (current)</td><td>Now</td><td>Classical-only. Reserve <code>HAS_PQ</code> flag bit. Spec defines PQ verification method types.</td></tr>
+      <tr><td><strong>Phase 2</strong> (hybrid)</td><td>NIST finalizes FIPS 204/203 + Solana runtime supports PQ signature verification</td><td>Dual classical+PQ keys. Issuers sign with both. Verifiers accept either.</td></tr>
+      <tr><td><strong>Phase 3</strong> (PQ-only)</td><td>CRQC threat is imminent or classical algorithms are deprecated by NIST</td><td>Classical keys removed. <code>#solana-key</code> and <code>#ecies-key</code> sunset.</td></tr>
+    </table>
+
+    <div class="note">
+      <strong>Harvest-now-decrypt-later:</strong> Encrypted VP payloads created today with ECIES
+      are at risk of future quantum decryption. For high-sensitivity credentials (financial, medical),
+      implementers SHOULD begin using ML-KEM-768 hybrid encryption in Phase 2, even before
+      the full PQ transition. The dual-key Shamir architecture (2-of-2 split) provides an
+      additional defense layer &mdash; an attacker must compromise both shares.
+    </div>
 
     <!-- ─── 9. Privacy Considerations ────────────────────────────── -->
 
@@ -758,6 +851,8 @@ attestto.sol                    &rarr; Platform Authority
       <tr><td>SD-JWT (RFC 9449)</td><td><a href="https://www.rfc-editor.org/rfc/rfc9449">rfc-editor.org/rfc/rfc9449</a></td></tr>
       <tr><td>Ed25519 (RFC 8032)</td><td><a href="https://www.rfc-editor.org/rfc/rfc8032">rfc-editor.org/rfc/rfc8032</a></td></tr>
       <tr><td>ECIES (secp256k1)</td><td>Public domain</td></tr>
+      <tr><td>ML-DSA (FIPS 204)</td><td><a href="https://csrc.nist.gov/pubs/fips/204/final">csrc.nist.gov/pubs/fips/204</a></td></tr>
+      <tr><td>ML-KEM (FIPS 203)</td><td><a href="https://csrc.nist.gov/pubs/fips/203/final">csrc.nist.gov/pubs/fips/203</a></td></tr>
       <tr><td>DIDComm v2</td><td><a href="https://identity.foundation/didcomm-messaging/spec/">identity.foundation/didcomm-messaging</a></td></tr>
       <tr><td>W3C Bitstring Status List</td><td><a href="https://www.w3.org/TR/vc-bitstring-status-list/">w3.org/TR/vc-bitstring-status-list</a></td></tr>
     </table>
