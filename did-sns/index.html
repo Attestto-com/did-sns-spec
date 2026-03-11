@@ -617,16 +617,16 @@ attestto.sol                    &rarr; Platform Authority
     <p>DID metadata is stored in the SNS account data buffer (bytes 96+), identified by magic bytes <code>0x44494401</code>.</p>
 
     <div class="ascii">SNS NameRegistry Account:
-&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
-&#9474; HEADER (96 bytes &mdash; fixed by SNS program)           &#9474;
-&#9474;  &#9500;&#9472;&#9472; Parent Key      (bytes 0-31)    32 bytes    &#9474;
-&#9474;  &#9500;&#9472;&#9472; Owner Key       (bytes 32-63)   32 bytes    &#9474;
-&#9474;  &#9492;&#9472;&#9472; Class Key       (bytes 64-95)   32 bytes    &#9474;
-&#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
-&#9474; DATA BUFFER (bytes 96+ &mdash; DID metadata)             &#9474;
-&#9474;  &#9492;&#9472;&#9472; Magic + Version + Flags + SAS UID          &#9474;
-&#9474;      + ECIES key + Vault hash + Doc hash          &#9474;
-&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</div>
++--------------------------------------------------+
+| HEADER (96 bytes -- fixed by SNS program)        |
+|  +-- Parent Key      (bytes 0-31)    32 bytes    |
+|  +-- Owner Key       (bytes 32-63)   32 bytes    |
+|  +-- Class Key       (bytes 64-95)   32 bytes    |
++--------------------------------------------------+
+| DATA BUFFER (bytes 96+ -- DID metadata)          |
+|  +-- Magic + Version + Flags + SAS UID           |
+|      + ECIES key + Vault hash + Doc hash         |
++--------------------------------------------------+</div>
 
     <h3>v2 Schema Layout (160 bytes)</h3>
     <table>
@@ -659,29 +659,29 @@ attestto.sol                    &rarr; Platform Authority
     the pointer to fetch verifiable claims.</p>
 
     <div class="ascii">SNS Data Buffer                         SAS Attestation (on-chain)
-&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  follows UID  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
-&#9474; Magic + Version          &#9474; &mdash;&mdash;&mdash;&mdash;&mdash;&rarr; &#9474; credential: Issuer PDA         &#9474;
-&#9474; Flags (HAS_SAS = 0x10)   &#9474;              &#9474; schema: DID Identity v1        &#9474;
-&#9474; SAS Attestation UID &#9472;&#9472;&#9472;&#9472;&#9508;              &#9474; signer: Authorized key         &#9474;
-&#9474; ECIES Public Key         &#9474;              &#9474; data:                          &#9474;
-&#9474; Vault Endpoint Hash      &#9474;              &#9474;   lei_hash (SHA-256)            &#9474;
-&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;              &#9474;   role_level (1-4)              &#9474;
-       &uarr; owned by                         &#9474;   jurisdiction (ISO 3166)       &#9474;
-  Domain owner                            &#9474;   zkp_proof_hash                &#9474;
-  (or platform)                           &#9474;   expires_at                    &#9474;
-                                          &#9474; tokenAccount (SBT)             &#9474;
-                                          &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
-                                                 &uarr; signed by
-                                           Authorized Issuer</div>
++-------------------------+  follows UID  +-----------------------------+
+| Magic + Version         | -----------> | credential: Issuer PDA      |
+| Flags (HAS_SAS = 0x10) |              | schema: DID Identity v1     |
+| SAS Attestation UID ----|              | signer: Authorized key      |
+| ECIES Public Key        |              | data:                       |
+| Vault Endpoint Hash     |              |   lei_hash (SHA-256)        |
++-------------------------+              |   role_level (1-4)          |
+       ^ owned by                        |   jurisdiction (ISO 3166)   |
+  Domain owner                           |   zkp_proof_hash            |
+  (or platform)                          |   expires_at                |
+                                         | tokenAccount (SBT)          |
+                                         +-----------------------------+
+                                                ^ signed by
+                                          Authorized Issuer</div>
 
     <h3>SAS Hierarchy</h3>
     <div class="ascii">Credential (Issuer Authority)
-  &boxur;&boxh;&boxh; Schema (DID Identity Attestation v1)
-        &boxur;&boxh;&boxh; Attestation (per-user, per-domain)
-              &boxvr;&boxh;&boxh; data: Borsh-serialized identity claims
-              &boxvr;&boxh;&boxh; expiry: Unix timestamp
-              &boxvr;&boxh;&boxh; signer: Authorized signer key
-              &boxur;&boxh;&boxh; tokenAccount: Optional Token-2022 SBT</div>
+  +-- Schema (DID Identity Attestation v1)
+        +-- Attestation (per-user, per-domain)
+              |-- data: Borsh-serialized identity claims
+              |-- expiry: Unix timestamp
+              |-- signer: Authorized signer key
+              +-- tokenAccount: Optional Token-2022 SBT</div>
 
     <h3>Why Two Layers?</h3>
     <table>
