@@ -813,8 +813,10 @@ attestto.sol                    &rarr; Platform Authority
       <strong>Harvest-now-decrypt-later:</strong> Encrypted VP payloads created today with ECIES
       are at risk of future quantum decryption. For high-sensitivity credentials (financial, medical),
       implementers SHOULD begin using ML-KEM-768 hybrid encryption in Phase 2, even before
-      the full PQ transition. The dual-key Shamir architecture (2-of-2 split) provides an
-      additional defense layer &mdash; an attacker must compromise both shares.
+      the full PQ transition. The dual-key Shamir architecture (2-of-2 VMK split, with 2-of-3 social
+      recovery on the user share) provides an additional defense layer &mdash; an attacker
+      must compromise both shares, and the user share itself is recoverable only with
+      two of three sub-shares (device, cloud backup, guardian).
     </div>
 
     <!-- ─── 9. Privacy Considerations ────────────────────────────── -->
