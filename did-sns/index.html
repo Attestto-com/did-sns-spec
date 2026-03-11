@@ -150,6 +150,7 @@
         <li><a href="#sas">SAS Integration (Proof Layer)</a></li>
         <li><a href="#security">Security Considerations</a></li>
         <li><a href="#pqc">Post-Quantum Cryptography Migration</a></li>
+        <li><a href="#vault-keys">Vault Key Architecture &amp; Social Recovery</a></li>
         <li><a href="#privacy">Privacy Considerations</a></li>
         <li><a href="#references">References</a></li>
       </ol>
@@ -817,6 +818,107 @@ attestto.sol                    &rarr; Platform Authority
       recovery on the user share) provides an additional defense layer &mdash; an attacker
       must compromise both shares, and the user share itself is recoverable only with
       two of three sub-shares (device, cloud backup, guardian).
+    </div>
+
+    <!-- ─── 8.2 Vault Key Architecture & Social Recovery ──────────── -->
+
+    <h2 id="vault-keys">8.2 Vault Key Architecture &amp; Social Recovery</h2>
+
+    <p>Attestto ID credentials at Tier 3 (Self-Sovereign) use a hierarchical key architecture
+    to protect encrypted proof payloads. No single party &mdash; including Attestto &mdash; can
+    decrypt data alone.</p>
+
+    <h3>Key Hierarchy</h3>
+
+    <div class="ascii">                     Vault Master Key (VMK)
+                     256-bit AES key
+                            |
+              +-------------+-------------+
+              |         2-of-2 XOR        |
+              |           Split           |
+              v                           v
+      +---------------+          +---------------+
+      |   Share A     |          |   Share B     |
+      |   (User)      |          |   (Attestto)  |
+      |               |          |               |
+      | Stored in:    |          | Stored in:    |
+      | Vault browser |          | PII Vault     |
+      | extension     |          | (KEK-wrapped) |
+      +-------+-------+          +---------------+
+              |
+              |  2-of-3 Shamir
+              |  Social Recovery
+              |
+    +---------+---------+---------+
+    |                   |         |
+    v                   v         v
++--------+       +---------+  +-----------+
+| Device |       | Cloud   |  | Guardian  |
+| Share  |       | Backup  |  | Share     |
+|        |       | Share   |  |           |
+| Local  |       | E2E     |  | Trusted   |
+| secure |       | encrypted| | contact   |
+| storage|       | storage |  | (offline) |
++--------+       +---------+  +-----------+
+
+Any 2 of 3 sub-shares reconstruct Share A</div>
+
+    <h3>Encryption Flow</h3>
+
+    <div class="ascii">Encrypt:                                 Decrypt:
+
+1. Generate DEK (per-object)             1. User provides Share A
+   DEK = random AES-256 key                 (from extension)
+
+2. Encrypt payload                       2. Platform provides Share B
+   ciphertext = AES-256-GCM(DEK, data)     (from PII Vault, KEK-unwrap)
+
+3. Wrap DEK with VMK                     3. Reconstruct VMK
+   wrapped_dek = AES-KEYWRAP(VMK, DEK)     VMK = Share_A XOR Share_B
+
+4. Split VMK into shares                 4. Unwrap DEK
+   Share_A = random(32)                     DEK = AES-KEYUNWRAP(VMK, wrapped_dek)
+   Share_B = VMK XOR Share_A
+                                         5. Decrypt payload
+5. Store Share_A in extension               data = AES-256-GCM(DEK, ciphertext)
+   Store Share_B in PII Vault
+   (KEK-wrapped)                         Both shares required.
+                                         Neither party can decrypt alone.</div>
+
+    <h3>Social Recovery Protocol</h3>
+    <p>If the user loses access to their Vault extension (device loss, browser reset),
+    Share A can be reconstructed from social recovery sub-shares using 2-of-3 Shamir
+    Secret Sharing:</p>
+
+    <table>
+      <tr><th>Sub-Share</th><th>Storage</th><th>Access</th></tr>
+      <tr><td><strong>Device share</strong></td><td>Browser extension local storage (encrypted)</td><td>Automatic &mdash; available while device is active</td></tr>
+      <tr><td><strong>Cloud backup share</strong></td><td>End-to-end encrypted cloud storage</td><td>User authenticates to cloud provider</td></tr>
+      <tr><td><strong>Guardian share</strong></td><td>Held by a trusted contact (offline or separate device)</td><td>Guardian provides share upon identity verification</td></tr>
+    </table>
+
+    <h3>Recovery Scenarios</h3>
+    <table>
+      <tr><th>Scenario</th><th>Shares Available</th><th>Recovery</th></tr>
+      <tr><td>Lost phone, have laptop</td><td>Device (laptop) + Cloud</td><td>Automatic &mdash; 2 of 3</td></tr>
+      <tr><td>Lost all devices</td><td>Cloud + Guardian</td><td>Guardian-assisted &mdash; 2 of 3</td></tr>
+      <tr><td>Lost device + no cloud</td><td>Guardian + new device enrollment</td><td>Guardian-assisted &mdash; requires re-enrollment</td></tr>
+      <tr><td>Lost all 3 sub-shares</td><td>None</td><td>Unrecoverable &mdash; crypto-shredding equivalent</td></tr>
+    </table>
+
+    <h3>Crypto-Shredding</h3>
+    <p>Deleting Share B from the PII Vault renders all encrypted objects permanently inaccessible,
+    regardless of Share A availability. This satisfies the GDPR / Costa Rica Law 8968 right to erasure
+    without requiring on-chain data deletion &mdash; the on-chain pointers become meaningless
+    without the decryption keys.</p>
+
+    <div class="note">
+      <strong>Threat model:</strong> An attacker who compromises only the Attestto platform
+      obtains Share B (KEK-wrapped) but cannot decrypt without Share A. An attacker who
+      compromises only the user&rsquo;s device obtains Share A but cannot decrypt without
+      Share B. Compromising both requires breaching the platform <em>and</em> the user&rsquo;s
+      device simultaneously. Even then, recovering Share A from a compromised device
+      requires 2 of the 3 social recovery sub-shares.
     </div>
 
     <!-- ─── 9. Privacy Considerations ────────────────────────────── -->
