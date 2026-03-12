@@ -147,6 +147,7 @@
             <li><a href="#op-update">Update</a></li>
             <li><a href="#op-deactivate">Deactivate</a></li>
             <li><a href="#lifecycle">DID Lifecycle: Issue Once, Evolve Forever</a></li>
+            <li><a href="#root-domains">Root Domains as Organizational DIDs</a></li>
           </ol>
         </li>
         <li><a href="#metadata">On-Chain Metadata Schema</a></li>
@@ -870,6 +871,230 @@ Key A (original owner)                event                Key B (new owner)
       evolves independently without disturbing the identifier. This is the &ldquo;Living DID&rdquo;
       concept: the identity is always current, never re-issued, and never accumulates historical
       baggage in its resolution path.
+    </div>
+
+    <!-- ─── 5.6 Root Domains as Organizational DIDs ─────────────── -->
+
+    <h3 id="root-domains">5.6 Root Domains as Organizational DIDs</h3>
+
+    <p>Root domains (<code>crbank.sol</code>, <code>attestto.sol</code>) are <strong>first-class DIDs</strong>,
+    not merely namespace containers. A root domain DID represents the <em>organization</em> itself,
+    while subdomains represent individuals, departments, or services within that organization.</p>
+
+    <h4>Trust Hierarchy</h4>
+
+    <div class="ascii">did:sns:attestto.sol                     ← Platform root (trust anchor)
+  │
+  ├── did:sns:crbank.attestto.sol        ← Tenant org (or crbank.sol if whitelabel)
+  │     ├── did:sns:alice.crbank.sol     ← Individual (client/employee)
+  │     ├── did:sns:bob.crbank.sol       ← Individual
+  │     └── did:sns:ops.crbank.sol       ← Service/department
+  │
+  └── did:sns:fintech.attestto.sol       ← Another tenant org
+        └── did:sns:carol.fintech.sol    ← Individual</div>
+
+    <p>The <code>controller</code> field in each DID Document establishes this hierarchy. A subdomain&rsquo;s
+    controller is its parent domain. A root domain&rsquo;s controller is itself (self-sovereign) or
+    the platform root (delegated).</p>
+
+    <h4>Organizational vs Individual DIDs</h4>
+
+    <table>
+      <tr><th>Aspect</th><th>Root Domain (Organization)</th><th>Subdomain (Individual)</th></tr>
+      <tr>
+        <td><strong>Represents</strong></td>
+        <td>A legal entity (bank, fintech, DAO, government body)</td>
+        <td>A natural person, employee, or service endpoint</td>
+      </tr>
+      <tr>
+        <td><strong>Onboarding</strong></td>
+        <td>KYB (Know Your Business) &mdash; LEI, articles of incorporation, UBO verification</td>
+        <td>KYC (Know Your Customer) &mdash; identity document, liveness, biometric</td>
+      </tr>
+      <tr>
+        <td><strong>SAS attestation</strong></td>
+        <td>vLEI OOR (Organizational Role) with LEI code, jurisdiction, authorized signers</td>
+        <td>DID Identity Attestation with KYC level, tier, role</td>
+      </tr>
+      <tr>
+        <td><strong>Tier progression</strong></td>
+        <td>Not applicable &mdash; organizations are verified via KYB/vLEI, not user tiers</td>
+        <td>Tier 1 &rarr; 2 &rarr; 3 (Attestto ID &rarr; Attestto SSID)</td>
+      </tr>
+      <tr>
+        <td><strong>Issuer role</strong></td>
+        <td><strong>Can be an issuer</strong> &mdash; the org DID signs SAS attestations for its subdomains</td>
+        <td>Consumer only &mdash; receives attestations, does not issue them</td>
+      </tr>
+      <tr>
+        <td><strong>Key custody</strong></td>
+        <td>Institutional wallet (HSM, multi-sig, or managed by platform)</td>
+        <td>Personal wallet, passkey, or platform-managed</td>
+      </tr>
+      <tr>
+        <td><strong>Subdomain provisioning</strong></td>
+        <td>Owner of the namespace &mdash; creates subdomains for members</td>
+        <td>Cannot create sub-subdomains (max depth = 2)</td>
+      </tr>
+    </table>
+
+    <h4>Root Domain DID Document</h4>
+
+    <p>A resolved root domain DID Document includes the same verification methods as individual DIDs,
+    plus organizational metadata in the SAS attestation:</p>
+
+    <pre><code>{
+  "@context": ["https://www.w3.org/ns/did/v1", "https://spec.attestto.com/v1/sns.jsonld"],
+  "id": "did:sns:crbank.sol",
+  "controller": "did:sns:crbank.sol",
+  "verificationMethod": [
+    {
+      "id": "did:sns:crbank.sol#solana-key",
+      "type": "Ed25519VerificationKey2020",
+      "controller": "did:sns:crbank.sol",
+      "publicKeyMultibase": "z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP"
+    },
+    {
+      "id": "did:sns:crbank.sol#ecies-key",
+      "type": "EcdsaSecp256k1VerificationKey2019",
+      "controller": "did:sns:crbank.sol",
+      "publicKeyMultibase": "zQ3shokFTS3brHcDQrn82RUDfCZESWL1ZdCEJwekUDPQiYBme"
+    }
+  ],
+  "authentication": ["did:sns:crbank.sol#solana-key"],
+  "assertionMethod": ["did:sns:crbank.sol#solana-key"],
+  "keyAgreement": ["did:sns:crbank.sol#ecies-key"],
+  "service": [
+    {
+      "id": "did:sns:crbank.sol#vault",
+      "type": "EncryptedDataVault",
+      "serviceEndpoint": "https://vault.crbank.cr/.well-known/did/vault"
+    },
+    {
+      "id": "did:sns:crbank.sol#attestation-authority",
+      "type": "SASAttestationAuthority",
+      "serviceEndpoint": "https://api.crbank.cr/sas/attestations"
+    }
+  ]
+}</code></pre>
+
+    <p>The <code>#attestation-authority</code> service endpoint is unique to organizational DIDs &mdash;
+    it declares that this entity can issue SAS attestations for subdomains under its namespace.</p>
+
+    <h4>Trust Chain Verification</h4>
+
+    <p>When a verifier resolves <code>did:sns:alice.crbank.sol</code>, they can walk the trust chain
+    upward to verify the issuing organization:</p>
+
+    <div class="ascii">Verifier resolves: did:sns:alice.crbank.sol
+    │
+    ├─ 1. Fetch SNS PDA for alice.crbank.sol
+    │     → owner = Alice's wallet, HAS_SAS = true
+    │
+    ├─ 2. Fetch SAS attestation (Alice's identity)
+    │     → signer = CRBank's authority key
+    │     → claims: KYC Level 2, jurisdiction: CR
+    │
+    ├─ 3. Resolve parent: did:sns:crbank.sol
+    │     → controller = crbank.sol (self-sovereign)
+    │     → Verify: CRBank's authority key matches #solana-key
+    │
+    ├─ 4. Fetch SAS attestation (CRBank's org identity)
+    │     → signer = Attestto platform authority
+    │     → claims: LEI = 5299009QI7..., vLEI OOR verified
+    │
+    └─ 5. (Optional) Resolve platform root: did:sns:attestto.sol
+          → Trust anchor — platform's own DID</div>
+
+    <p>Each step in the chain is independently verifiable from on-chain data. The verifier does not
+    need to trust any intermediary &mdash; they verify the cryptographic signatures at each level.</p>
+
+    <h4>Organizational Domain Ownership Transfer (Acquisition / Merger)</h4>
+
+    <p>When a company is acquired, merged, or restructured, the root domain may change owners.
+    This is fundamentally different from an individual key rotation because it represents a
+    <strong>change in the legal entity</strong> controlling the namespace and all identities under it.</p>
+
+    <table>
+      <tr><th>Scenario</th><th>What Happens</th><th>Impact on Subdomains</th></tr>
+      <tr>
+        <td><strong>Acquisition</strong><br><em>MegaBank acquires CRBank</em></td>
+        <td><code>crbank.sol</code> ownership transfers to MegaBank&rsquo;s wallet.
+          New SAS attestation issued under MegaBank&rsquo;s authority.</td>
+        <td>All subdomains (<code>alice.crbank.sol</code>) retain their DIDs. The <code>controller</code>
+          chain now leads to MegaBank. Existing SAS attestations (signed by old CRBank authority)
+          remain valid but verifiers see the org attestation has changed.</td>
+      </tr>
+      <tr>
+        <td><strong>Merger</strong><br><em>CRBank + FinCo &rarr; NewBank</em></td>
+        <td>New domain <code>newbank.sol</code> registered. Old domains deactivated or kept as
+          aliases via <code>alsoKnownAs</code>.</td>
+        <td>Subdomains migrated: <code>alice.crbank.sol</code> gets <code>alice.newbank.sol</code>
+          (new DID). Old DID linked via <code>alsoKnownAs</code> for continuity.</td>
+      </tr>
+      <tr>
+        <td><strong>Rebrand</strong><br><em>CRBank &rarr; CRDigital</em></td>
+        <td>New domain <code>crdigital.sol</code> registered. <code>crbank.sol</code>
+          kept active with <code>alsoKnownAs</code> pointing to new domain.</td>
+        <td>Subdomains can be dual-homed during transition: both <code>alice.crbank.sol</code>
+          and <code>alice.crdigital.sol</code> resolve, linked via <code>alsoKnownAs</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Regulatory seizure</strong><br><em>Regulator takes control of insolvent bank</em></td>
+        <td>Domain ownership transferred to regulator&rsquo;s wallet by platform
+          (if platform holds update authority) or by court order (multi-sig).</td>
+        <td>Client DIDs survive &mdash; the regulator becomes the namespace controller.
+          Client credentials and vault data remain intact (2-of-2 Shamir protects vault access).</td>
+      </tr>
+    </table>
+
+    <h4>Acquisition Lifecycle: Step by Step</h4>
+
+    <p>When MegaBank acquires CRBank and takes over <code>crbank.sol</code>:</p>
+
+    <div class="ascii">Phase 1: Pre-Acquisition
+  crbank.sol → owner = CRBank wallet
+  alice.crbank.sol → SAS signed by CRBank authority
+  Trust chain: Alice → CRBank → Attestto
+
+Phase 2: Ownership Transfer
+  crbank.sol → owner = MegaBank wallet (on-chain transfer)
+  Old CRBank SAS attestation closed
+  New SAS attestation: MegaBank as org, LEI updated
+  Trust chain: Alice → MegaBank → Attestto
+
+Phase 3: Re-Attestation (optional, recommended)
+  alice.crbank.sol → new SAS attestation signed by MegaBank authority
+  Old CRBank-signed attestation still verifiable in Solana tx history
+  Auditors can see: "Alice was attested by CRBank, then by MegaBank"
+
+Phase 4: Namespace Migration (optional)
+  alice.megabank.sol created → alsoKnownAs: alice.crbank.sol
+  Gradual transition; both domains resolve during migration window
+  crbank.sol eventually deactivated or kept as permanent alias</div>
+
+    <div class="note note-amber">
+      <strong>Key difference from individual transfers:</strong> When an individual&rsquo;s wallet
+      key rotates, the same person retains the identity. When an org domain changes owners, the
+      <em>legal entity</em> behind the namespace changes. This has regulatory implications:
+      <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+        <li>Regulators (BCCR, FinCEN) must be able to trace the acquisition in the on-chain history</li>
+        <li>Client consent may be required before re-attestation under the new authority</li>
+        <li>SAS attestations signed by the <em>old</em> authority remain in the Solana tx log &mdash;
+          they are never deleted, ensuring full provenance for auditors</li>
+        <li>The 2-of-2 Shamir vault architecture ensures the acquiring entity cannot access client
+          vault data without each client&rsquo;s individual consent (Share A remains with the client)</li>
+      </ul>
+    </div>
+
+    <div class="note note-green">
+      <strong>Why this works:</strong> Because <code>did:sns</code> separates the <em>alias</em>
+      (domain name) from the <em>proof</em> (SAS attestation) and the <em>data</em> (encrypted vault),
+      an ownership transfer changes only who controls the namespace &mdash; not who controls the
+      individual identities or data underneath. The acquiring entity gets the &ldquo;phonebook&rdquo;
+      (the ability to create/manage subdomains) but not the &ldquo;safe&rdquo; (encrypted vault
+      contents require client-side Share A). This is the architectural separation that makes
+      <code>did:sns</code> suitable for regulated M&amp;A scenarios.
     </div>
 
     <!-- ─── 6. On-Chain Metadata Schema ──────────────────────────── -->
