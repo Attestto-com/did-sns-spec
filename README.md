@@ -1,8 +1,8 @@
 # did:sns — DID Method Specification
 
-**Alias-anchored W3C Decentralized Identifiers for Solana Name Service**
+**Alias-anchored W3C Decentralized Identifiers for cross-border interoperability, privacy, and compliance**
 
-The `did:sns` method binds [W3C Decentralized Identifiers](https://www.w3.org/TR/did-core/) to human-readable [Solana Name Service](https://sns.id) (SNS) domains. Web3 native, Web2 transparent — end users interact with readable aliases while the specification guarantees interoperability, privacy, and compliance across institutions, jurisdictions, and blockchains.
+The `did:sns` method binds [W3C Decentralized Identifiers](https://www.w3.org/TR/did-core/) to human-readable `.sol` domain aliases — enabling institutions, fintechs, and regulated entities to issue, verify, and present identity credentials across jurisdictions and blockchains. Web3 native, Web2 transparent — end users interact with readable aliases while the specification guarantees interoperability, selective disclosure, and regulatory compliance out of the box.
 
 ```
 did:sns:alice.crbank.sol          # Tenant client subdomain
