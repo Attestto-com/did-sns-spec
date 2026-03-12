@@ -122,7 +122,6 @@
     <nav class="nav">
       <a href="https://attestto.com">&larr; attestto.com</a>
       <a href="../">Specifications</a>
-      <a href="./overview/">Quick Overview</a>
       <a href="./report/">Implementation Report</a>
       <a href="./charter/">Community Charter</a>
       <a href="./ip-affirmation/">IP Affirmation</a>
@@ -137,6 +136,13 @@
       <h3>Table of Contents</h3>
       <ol>
         <li><a href="#abstract">Abstract</a></li>
+        <li><a href="#use-cases">W3C Use Cases &amp; Requirements Coverage</a>
+          <ol>
+            <li><a href="#uc-features">Feature Coverage Matrix</a></li>
+            <li><a href="#uc-benefits">Benefit Alignment Grid</a></li>
+            <li><a href="#uc-focal">Focal Use Case &amp; Requirements</a></li>
+          </ol>
+        </li>
         <li><a href="#architecture">Architectural Rationale: The Living DID</a></li>
         <li><a href="#syntax">DID Syntax</a></li>
         <li><a href="#document">DID Document</a></li>
@@ -197,9 +203,276 @@
       <li><strong>Issuer-signed proofs</strong> &mdash; SAS attestations provide cryptographically verifiable claims, not self-asserted data</li>
     </ul>
 
-    <!-- ─── 2. Architecture ──────────────────────────────────────── -->
+    <!-- ─── 2. W3C Use Cases & Requirements Coverage ─────────────── -->
 
-    <h2 id="architecture">2. Architectural Rationale: The Living DID</h2>
+    <h2 id="use-cases">2. W3C Use Cases &amp; Requirements Coverage</h2>
+
+    <p>The W3C <a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/">DID Use Cases and Requirements</a>
+    note defines 22 features that DID methods should address, mapped against five benefit categories
+    (<a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#featureBenefitGrid">Feature/Benefit Grid</a>).
+    The table below shows how <code>did:sns</code> covers each feature.</p>
+
+    <h3 id="uc-features">2.1 Feature Coverage Matrix</h3>
+
+    <table>
+      <tr>
+        <th>W3C Feature</th>
+        <th>did:sns</th>
+        <th>How</th>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#authenticate">Authentication / proof of control</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Ed25519 signature over the DID Document; SAS attestations bind issuer-signed proofs to the identifier.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#decentralized">Decentralized / self-issued</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>SNS domain registration on Solana requires no central authority. Any wallet can register a <code>.sol</code> domain and anchor a DID.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#unique">Guaranteed unique identifier</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>SNS domains are globally unique on Solana. The PDA derivation algorithm guarantees collision-free identifiers.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#noCallHome">No call home</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Resolution reads on-chain state via any Solana RPC. Verification uses standard JOSE libraries &mdash; no need to contact the issuer or Attestto.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#associatedCrypto">Associated cryptographic material</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>DID Document includes Ed25519, secp256k1, and ML-DSA verification methods tightly bound to the identifier.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#keyRotation">Streamlined key rotation</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Core design principle &mdash; SNS domain transfer updates the owner keypair while the DID identifier stays the same. No credential reissuance required.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#serviceEndpoint">Service endpoint discovery</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>DID Document <code>service</code> array supports arbitrary endpoints (DIDComm, credential status, linked domains).</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#privacyPreserving">Privacy preserving</a></td>
+        <td style="color:var(--amber);font-weight:600;">Partial</td>
+        <td>SD-JWT selective disclosure limits data exposure per presentation. However, SNS names are human-readable and on-chain resolution is public. Pairwise DIDs are recommended for privacy-sensitive contexts (see <a href="#privacy">&sect;10</a>).</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#delegation">Delegation of control</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Hierarchical subdomain model &mdash; parent domain owner controls child subdomains. <code>controller</code> field in DID Document supports multi-party delegation.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#interJ">Inter-jurisdictional</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Solana is a permissionless global network. DID resolution and credential verification work identically regardless of jurisdiction.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#noDenial">Can&rsquo;t be administratively denied</a></td>
+        <td style="color:var(--amber);font-weight:600;">Partial</td>
+        <td>Root <code>.sol</code> domain owners have full control. However, platform-operated subdomains (e.g., <code>alice.attestto.sol</code>) can be revoked by the parent. Tenant-operated root domains (e.g., <code>crbank.sol</code>) have sovereign control.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#minRent">Minimized rents</a></td>
+        <td style="color:var(--amber);font-weight:600;">Partial</td>
+        <td>SNS domain registration is a one-time cost. Solana rent-exemption requires a minimum SOL deposit (recoverable on domain close), but there are no per-transaction fees for DID resolution.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#noVendorLock">No vendor lock-in</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Universal Resolver driver, standard SD-JWT credentials, DIDComm v2, and public status lists. No Attestto software required for verification (see <a href="#interop">&sect;11</a>).</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#limitTrack">Preempt / limit trackable data trails</a></td>
+        <td style="color:var(--amber);font-weight:600;">Partial</td>
+        <td>SD-JWT selective disclosure and per-verifier presentation limits data leakage. On-chain resolution queries are publicly visible but carry no PII. Pairwise DIDs recommended for correlation resistance.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#cryptoFuture">Cryptographic future-proof</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Post-quantum migration path defined with ML-DSA-44 / ML-KEM-768 (FIPS 203/204). Hybrid mode during transition period (see <a href="#pqc">&sect;9.1</a>).</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#orgMort">Survives issuing organization mortality</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>DID data is anchored on Solana. If Attestto ceases to exist, the on-chain state, resolver code (MIT-licensed), and credentials remain independently verifiable.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#deployEnd">Survives deployment end-of-life</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>On-chain persistence. Any Solana RPC node can serve resolution data regardless of the requesting party&rsquo;s software lifecycle.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#survivesRel">Survives relationship with service provider</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Name-anchored design &mdash; the DID persists across custodial changes. Domain transfer changes the controller without changing the identifier.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#cryptoAuthComm">Cryptographic authentication &amp; communication</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>DIDComm v2 P2P encrypted channels. Ed25519 authentication + X25519 key agreement for secure communication.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#regAgnostic">Registry agnostic</a></td>
+        <td style="color:var(--amber);font-weight:600;">Partial</td>
+        <td>Bound to Solana/SNS as the verifiable data registry. However, the Universal Resolver driver and standard DID Document format mean consumers are registry-agnostic &mdash; they don&rsquo;t need Solana-specific tooling.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#legallyEnabled">Legally-enabled identity</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>GLEIF vLEI bridge for organizational identity. SAS attestations provide issuer-signed proofs suitable for regulated contexts. Compliance with FATF Travel Rule and Law 8968.</td>
+      </tr>
+      <tr>
+        <td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#humanInterop">Human-centered interoperability</a></td>
+        <td style="color:var(--green);font-weight:600;">Covered</td>
+        <td>Human-readable SNS names (<code>did:sns:alice.attestto</code>) instead of opaque hashes. DNS TXT aliasing bridges Web2 domain names to <code>did:sns</code> identifiers.</td>
+      </tr>
+    </table>
+
+    <div class="note note-green">
+      <strong>Summary:</strong> <code>did:sns</code> fully covers <strong>17 of 22</strong> W3C features and partially covers the remaining 5.
+      The partial coverages are inherent trade-offs of name-anchored, on-chain identity (human-readable names vs. correlation resistance;
+      Solana-specific registry vs. full registry agnosticism) and are mitigated by pairwise DID recommendations and Universal Resolver integration.
+    </div>
+
+    <h3 id="uc-benefits">2.2 Benefit Alignment Grid</h3>
+
+    <p>The W3C note groups features into five benefit categories. The grid below mirrors the
+    <a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#featureBenefitGrid">official Feature/Benefit Grid</a>
+    and marks which benefits <code>did:sns</code> delivers for each feature it covers.</p>
+
+    <table>
+      <tr>
+        <th>Feature</th>
+        <th>Anti-censor</th>
+        <th>Anti-exploitation</th>
+        <th>Ease of use</th>
+        <th>Privacy</th>
+        <th>Sustainability</th>
+        <th>did:sns</th>
+      </tr>
+      <tr><td>Authentication / proof of control</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Decentralized / self-issued</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Guaranteed unique identifier</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>No call home</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Associated cryptographic material</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Streamlined key rotation</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Service endpoint discovery</td><td></td><td></td><td>&#x2713;</td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Privacy preserving</td><td></td><td></td><td></td><td>&#x2713;</td><td>&#x2713;</td><td style="color:var(--amber);">~</td></tr>
+      <tr><td>Delegation of control</td><td>&#x2713;</td><td></td><td></td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Inter-jurisdictional</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Can&rsquo;t be administratively denied</td><td>&#x2713;</td><td></td><td></td><td></td><td></td><td style="color:var(--amber);">~</td></tr>
+      <tr><td>Minimized rents</td><td></td><td>&#x2713;</td><td></td><td></td><td></td><td style="color:var(--amber);">~</td></tr>
+      <tr><td>No vendor lock-in</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Preempt / limit trackable data trails</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td style="color:var(--amber);">~</td></tr>
+      <tr><td>Cryptographic future-proof</td><td></td><td></td><td></td><td></td><td>&#x2713;</td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Survives issuing org mortality</td><td></td><td></td><td></td><td></td><td>&#x2713;</td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Survives deployment end-of-life</td><td></td><td></td><td></td><td></td><td>&#x2713;</td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Survives relationship with provider</td><td></td><td></td><td></td><td></td><td>&#x2713;</td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Crypto authentication &amp; communication</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Registry agnostic</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td style="color:var(--amber);">~</td></tr>
+      <tr><td>Legally-enabled identity</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+      <tr><td>Human-centered interoperability</td><td>&#x2713;</td><td>&#x2713;</td><td>&#x2713;</td><td></td><td></td><td style="color:var(--green);">&#x2713;</td></tr>
+    </table>
+
+    <p><strong>Legend:</strong> &#x2713; = W3C-defined benefit alignment &nbsp;|&nbsp;
+    <span style="color:var(--green);">&#x2713;</span> = fully covered by did:sns &nbsp;|&nbsp;
+    <span style="color:var(--amber);">~</span> = partially covered (see notes above)</p>
+
+    <h3 id="uc-focal">2.3 Focal Use Case &amp; Requirements</h3>
+
+    <p><code>did:sns</code> is designed for a specific primary scenario:
+    <strong>regulated multi-tenant identity</strong> &mdash; banks, fintechs, and compliance platforms
+    that need to issue, manage, and verify identities for their clients under their own brand,
+    across jurisdictions, while meeting financial and data-privacy regulation.</p>
+
+    <h4>The Scenario</h4>
+    <p>A regulated institution (e.g., <code>crbank.sol</code>) onboards clients through KYC/KYB.
+    Each verified client receives a <code>did:sns</code> subdomain (<code>alice.crbank.sol</code>).
+    The institution issues verifiable credentials (KYC level, LEI, accreditation) as SAS attestations.
+    The client can present selective-disclosure proofs to third parties &mdash; other banks, regulators,
+    auditors &mdash; without the issuing institution being in the loop. If the client moves to a
+    different institution, their identity history is portable via <code>alsoKnownAs</code> linking.</p>
+
+    <h4>Requirements Derived from This Use Case</h4>
+    <table>
+      <tr><th>#</th><th>Requirement</th><th>W3C Features Used</th><th>did:sns Mechanism</th></tr>
+      <tr>
+        <td>R1</td>
+        <td><strong>Institutional namespace control</strong> &mdash; the institution owns the root domain and controls all subdomains under it</td>
+        <td>Delegation of control, Decentralized</td>
+        <td>SNS hierarchical subdomains; <code>controller</code> field in DID Document points to parent</td>
+      </tr>
+      <tr>
+        <td>R2</td>
+        <td><strong>Identity survives key rotation</strong> &mdash; wallet changes, device loss, or custodial migration must not break the identity</td>
+        <td>Key rotation, Survives provider relationship</td>
+        <td>Name-anchored design; SNS domain transfer updates owner key without changing DID identifier</td>
+      </tr>
+      <tr>
+        <td>R3</td>
+        <td><strong>Issuer-signed proofs, not self-asserted</strong> &mdash; regulators and counterparties need cryptographic proof from the issuing institution, not claims the user wrote about themselves</td>
+        <td>Authentication, Associated crypto, Legally-enabled</td>
+        <td>SAS attestations signed by institution&rsquo;s keypair; bidirectional SNS&harr;SAS linking prevents spoofing</td>
+      </tr>
+      <tr>
+        <td>R4</td>
+        <td><strong>Selective disclosure per presentation</strong> &mdash; share only the fields required for a specific verification (e.g., &ldquo;KYC Level 2&rdquo; without revealing date of birth)</td>
+        <td>Privacy preserving, Limit trackable data trails</td>
+        <td>SD-JWT per-field disclosure with individual salt+hash; verifier sees only requested claims</td>
+      </tr>
+      <tr>
+        <td>R5</td>
+        <td><strong>No PII on the public ledger</strong> &mdash; financial regulation (GDPR, Law 8968, FATF) prohibits storing personal data on a public blockchain</td>
+        <td>Privacy preserving</td>
+        <td>On-chain stores only hashes and pointers; all PII in encrypted Data Vaults with 2-of-2 XOR key-split</td>
+      </tr>
+      <tr>
+        <td>R6</td>
+        <td><strong>Cross-border, cross-institution verification</strong> &mdash; a credential issued by a Costa Rican bank must be verifiable by a European fintech without bilateral integration</td>
+        <td>Inter-jurisdictional, No call home, No vendor lock-in</td>
+        <td>Universal Resolver + standard SD-JWT + public status lists; verifier needs no Attestto software or Solana tooling</td>
+      </tr>
+      <tr>
+        <td>R7</td>
+        <td><strong>Real-time credential state</strong> &mdash; when a client&rsquo;s compliance status changes (KYC upgrade, suspension, LEI renewal), the identity must reflect it immediately without reissuing the DID</td>
+        <td>Service endpoint discovery, Key rotation</td>
+        <td>&ldquo;Living DID&rdquo; architecture &mdash; SAS attestation updates in place; SNS buffer pointer stays current; no credential reissuance</td>
+      </tr>
+      <tr>
+        <td>R8</td>
+        <td><strong>Organizational identity with legal standing</strong> &mdash; the institution itself needs a verifiable identity (LEI, vLEI) that anchors trust for all credentials it issues</td>
+        <td>Legally-enabled, Authentication, Human-centered interop</td>
+        <td>Root domains as organizational DIDs; GLEIF vLEI bridge maps LEI credentials to SAS attestations</td>
+      </tr>
+      <tr>
+        <td>R9</td>
+        <td><strong>Audit trail without log bloat</strong> &mdash; regulators need full history but the system must not accumulate unbounded data per identity</td>
+        <td>Crypto future-proof, Sustainability</td>
+        <td>Stateless 160-byte buffer (O(1) resolution); full audit via Solana transaction history, not a DID Log</td>
+      </tr>
+      <tr>
+        <td>R10</td>
+        <td><strong>Post-quantum resilience</strong> &mdash; financial identities have 10&ndash;30 year lifespans; they must survive the cryptographic transition</td>
+        <td>Crypto future-proof</td>
+        <td>ML-DSA-44 / ML-KEM-768 hybrid mode defined; PQ keys stored in SAS layer, referenced by hash in fixed buffer</td>
+      </tr>
+    </table>
+
+    <div class="note note-purple">
+      <strong>Why these requirements matter together:</strong> Many DID methods satisfy individual requirements
+      in isolation. The design challenge of <code>did:sns</code> is satisfying <em>all ten simultaneously</em>
+      within a single coherent architecture &mdash; institutional control (R1, R3, R8) without sacrificing
+      user portability (R2, R6), privacy compliance (R4, R5) without losing auditability (R9),
+      and real-time state (R7) without log bloat (R9) or quantum vulnerability (R10).
+    </div>
+
+    <!-- ─── 3. Architecture ──────────────────────────────────────── -->
+
+    <h2 id="architecture">3. Architectural Rationale: The Living DID</h2>
 
     <p>Most blockchain-based DID methods couple <em>where data is found</em> with <em>how data is proved</em>
     into a single account. This forces a trade-off: either the system is too simple (self-asserted, no issuer trust)
@@ -286,7 +559,7 @@
 
     <!-- ─── 3. DID Syntax ────────────────────────────────────────── -->
 
-    <h2 id="syntax">3. DID Syntax</h2>
+    <h2 id="syntax">4. DID Syntax</h2>
     <p>The method name is <code>sns</code>. A DID using this method MUST begin with <code>did:sns:</code>.
     Per DID Core, the method name MUST be lowercase.</p>
 
@@ -342,7 +615,7 @@ attestto.sol                    &rarr; Platform Authority
 
     <!-- ─── 4. DID Document ──────────────────────────────────────── -->
 
-    <h2 id="document">4. DID Document</h2>
+    <h2 id="document">5. DID Document</h2>
 
     <h3>4.1 Context</h3>
     <p>All <code>did:sns</code> DID Documents MUST include:</p>
@@ -489,9 +762,9 @@ attestto.sol                    &rarr; Platform Authority
 
     <!-- ─── 5. CRUD Operations ───────────────────────────────────── -->
 
-    <h2 id="operations">5. CRUD Operations</h2>
+    <h2 id="operations">6. CRUD Operations</h2>
 
-    <h3 id="op-create">5.1 Create</h3>
+    <h3 id="op-create">6.1 Create</h3>
     <p>A <code>did:sns</code> DID is created by registering an SNS domain on Solana and writing
     DID metadata to the domain&rsquo;s raw data buffer. The domain registration alone does
     <strong>not</strong> constitute a functional DID &mdash; the metadata write (step 2) is required.</p>
@@ -527,7 +800,7 @@ attestto.sol                    &rarr; Platform Authority
       <tr><td><strong>Multi-Sig</strong></td><td>Either party initiates</td><td>2-of-2 (tenant + platform)</td><td>Maximum security</td></tr>
     </table>
 
-    <h3 id="op-read">5.2 Read (Resolve)</h3>
+    <h3 id="op-read">6.2 Read (Resolve)</h3>
     <p>Resolution fetches the NameRegistry account from Solana and constructs a W3C DID Document.</p>
 
     <h4>Algorithm</h4>
@@ -612,7 +885,7 @@ attestto.sol                    &rarr; Platform Authority
       <tr><td><code>internalError</code></td><td>500</td><td>RPC failure or resolver error</td></tr>
     </table>
 
-    <h3 id="op-update">5.3 Update</h3>
+    <h3 id="op-update">6.3 Update</h3>
     <p>DID Documents are <em>derived</em> from on-chain state, not stored as-is. Updates happen at the Solana layer:</p>
 
     <table>
@@ -631,7 +904,7 @@ attestto.sol                    &rarr; Platform Authority
       fresh metadata under it. Verifiers relying solely on the minimal DID Document (without SAS
       attestation) cannot detect ownership changes. For identity continuity assurance, verifiers
       MUST validate the SAS attestation chain, which is bound to the original issuer &mdash; not the
-      domain owner. See <a href="#security">&sect;8 Security Considerations</a>.
+      domain owner. See <a href="#security">&sect;9 Security Considerations</a>.
     </div>
 
     <h3>Transfer Security Model</h3>
@@ -703,7 +976,7 @@ Key A (original owner)                event                Key B (new owner)
       even after domain transfers, without depending on historical DID resolution.
     </div>
 
-    <h3 id="op-deactivate">5.4 Deactivate</h3>
+    <h3 id="op-deactivate">6.4 Deactivate</h3>
     <p>A DID is deactivated by transferring ownership to the system program (all-zero address):</p>
     <pre><code>{
   "@context": "https://w3id.org/did-resolution/v1",
@@ -721,11 +994,11 @@ Key A (original owner)                event                Key B (new owner)
 
     <!-- ─── 5.5 DID Lifecycle ─────────────────────────────────────── -->
 
-    <h3 id="lifecycle">5.5 DID Lifecycle: Issue Once, Evolve Forever</h3>
+    <h3 id="lifecycle">6.5 DID Lifecycle: Issue Once, Evolve Forever</h3>
 
     <p>A <code>did:sns</code> identifier is created <strong>once</strong> and never re-issued. The DID
     persists across key rotations, wallet migrations, custodial changes, KYC level upgrades,
-    credential issuance, and organizational restructuring. Only permanent deactivation (&sect;5.4)
+    credential issuance, and organizational restructuring. Only permanent deactivation (&sect;6.4)
     ends a DID&rsquo;s life &mdash; and even then the identifier remains resolvable (with
     <code>deactivated: true</code>) to preserve audit history.</p>
 
@@ -825,7 +1098,7 @@ Key A (original owner)                event                Key B (new owner)
         <td>DID persists but accumulates full change log. Every rotation, witness proof, and
           metadata update adds an entry. Resolver must replay the entire log.</td>
         <td><strong>Severe</strong> &mdash; PQ signatures (2&ndash;17 KB each) accumulate in every
-          log entry. 5-year DID: 1&ndash;4 MB log (see <a href="#no-did-log">&sect;8.3</a>).</td>
+          log entry. 5-year DID: 1&ndash;4 MB log (see <a href="#no-did-log">&sect;9.3</a>).</td>
       </tr>
       <tr>
         <td><strong>Document-hosted (fetch current)</strong></td>
@@ -838,7 +1111,7 @@ Key A (original owner)                event                Key B (new owner)
         <td><strong><code>did:sns</code></strong></td>
         <td>DID persists. Current state overwritten in fixed-size buffer. History delegated to
           blockchain&rsquo;s native transaction log. O(1) resolution always.</td>
-        <td><strong>None</strong> &mdash; buffer is 192 bytes regardless of key/sig sizes. PQ keys
+        <td><strong>None</strong> &mdash; buffer is 160 bytes regardless of key/sig sizes. PQ keys
           stored in SAS layer, referenced by hash.</td>
       </tr>
     </table>
@@ -874,9 +1147,9 @@ Key A (original owner)                event                Key B (new owner)
       baggage in its resolution path.
     </div>
 
-    <!-- ─── 5.6 Root Domains as Organizational DIDs ─────────────── -->
+    <!-- ─── 6.6 Root Domains as Organizational DIDs ─────────────── -->
 
-    <h3 id="root-domains">5.6 Root Domains as Organizational DIDs</h3>
+    <h3 id="root-domains">6.6 Root Domains as Organizational DIDs</h3>
 
     <p>Root domains (<code>crbank.sol</code>, <code>attestto.sol</code>) are <strong>first-class DIDs</strong>,
     not merely namespace containers. A root domain DID represents the <em>organization</em> itself,
@@ -1045,7 +1318,7 @@ Key A (original owner)                event                Key B (new owner)
         <td>Domain ownership transferred to regulator&rsquo;s wallet by platform
           (if platform holds update authority) or by court order (multi-sig).</td>
         <td>Client DIDs survive &mdash; the regulator becomes the namespace controller.
-          Client credentials and vault data remain intact (2-of-2 Shamir protects vault access).</td>
+          Client credentials and vault data remain intact (2-of-2 XOR key-split protects vault access).</td>
       </tr>
     </table>
 
@@ -1083,7 +1356,7 @@ Phase 4: Namespace Migration (optional)
         <li>Client consent may be required before re-attestation under the new authority</li>
         <li>SAS attestations signed by the <em>old</em> authority remain in the Solana tx log &mdash;
           they are never deleted, ensuring full provenance for auditors</li>
-        <li>The 2-of-2 Shamir vault architecture ensures the acquiring entity cannot access client
+        <li>The 2-of-2 XOR vault architecture ensures the acquiring entity cannot access client
           vault data without each client&rsquo;s individual consent (Share A remains with the client)</li>
       </ul>
     </div>
@@ -1100,7 +1373,7 @@ Phase 4: Namespace Migration (optional)
 
     <!-- ─── 6. On-Chain Metadata Schema ──────────────────────────── -->
 
-    <h2 id="metadata">6. On-Chain Metadata Schema</h2>
+    <h2 id="metadata">7. On-Chain Metadata Schema</h2>
     <p>DID metadata is stored in the SNS account data buffer (bytes 96+), identified by magic bytes <code>0x44494401</code>.</p>
 
     <div class="ascii">SNS NameRegistry Account:
@@ -1115,7 +1388,7 @@ Phase 4: Namespace Migration (optional)
 |      + ECIES key + Vault hash + Doc hash         |
 +--------------------------------------------------+</div>
 
-    <h3>v2 Schema Layout (192 bytes)</h3>
+    <h3>v2 Schema Layout (160 bytes)</h3>
     <table>
       <tr><th>Field</th><th>Offset</th><th>Size</th><th>Description</th></tr>
       <tr><td>Magic</td><td>0</td><td>4</td><td><code>0x44494401</code> (&ldquo;DID\x01&rdquo;)</td></tr>
@@ -1125,25 +1398,24 @@ Phase 4: Namespace Migration (optional)
       <tr><td>ECIES Key</td><td>38</td><td>33</td><td>Compressed secp256k1 public key for encryption</td></tr>
       <tr><td>Vault Hash</td><td>71</td><td>32</td><td>SHA-256 of vault service endpoint URL</td></tr>
       <tr><td>Doc Hash</td><td>103</td><td>32</td><td>SHA-256 of canonical DID Document</td></tr>
-      <tr><td>Reserved</td><td>135</td><td>57</td><td>Zero-filled (future use)</td></tr>
+      <tr><td>Reserved</td><td>135</td><td>25</td><td>Zero-filled (future use)</td></tr>
     </table>
 
     <h3>Flags Bitfield</h3>
     <table>
       <tr><th>Bit</th><th>Flag</th><th>Meaning</th></tr>
-      <tr><td><code>0x01</code></td><td><code>HAS_SAS</code></td><td>SAS attestation linked (proof layer)</td></tr>
+      <tr><td><code>0x01</code></td><td><code>ACTIVE</code></td><td>Domain is active (liveness flag)</td></tr>
       <tr><td><code>0x02</code></td><td><code>HAS_SBT</code></td><td>Soul-Bound Token minted</td></tr>
       <tr><td><code>0x04</code></td><td><code>IS_TIER3</code></td><td>Self-Sovereign ID tier</td></tr>
       <tr><td><code>0x08</code></td><td><code>HAS_LEI</code></td><td>LEI/vLEI credential linked</td></tr>
-      <tr><td><code>0x10</code></td><td><code>HAS_ECIES</code></td><td>ECIES encryption key published</td></tr>
-      <tr><td><code>0x20</code></td><td><code>HAS_PQ</code></td><td>Post-quantum keys in SAS attestation</td></tr>
+      <tr><td><code>0x10</code></td><td><code>HAS_SAS</code></td><td>SAS attestation linked (proof layer)</td></tr>
     </table>
     <p><strong>Note:</strong> Domain liveness is determined by the owner field (bytes 32&ndash;63), not a flag.
     A zero-address owner means the domain is deactivated.</p>
 
     <!-- ─── 7. SAS Integration ───────────────────────────────────── -->
 
-    <h2 id="sas">7. SAS Integration (Proof Layer)</h2>
+    <h2 id="sas">8. SAS Integration (Proof Layer)</h2>
     <p>The <a href="https://attest.solana.com/docs">Solana Attestation Service</a> (SAS) provides the
     issuer-signed proof layer. The SNS data buffer points to a SAS attestation; the resolver follows
     the pointer to fetch verifiable claims.</p>
@@ -1194,7 +1466,7 @@ Phase 4: Namespace Migration (optional)
 
     <!-- ─── 8. Security Considerations ───────────────────────────── -->
 
-    <h2 id="security">8. Security Considerations</h2>
+    <h2 id="security">9. Security Considerations</h2>
     <ul>
       <li><strong>No PII on-chain.</strong> All personal data is in encrypted Data Vaults.
         On-chain stores only cryptographic keys, flags, and hashes.</li>
@@ -1214,7 +1486,7 @@ Phase 4: Namespace Migration (optional)
         Compromising one subdomain does not affect siblings or the parent domain.</li>
       <li><strong>Post-quantum readiness.</strong> Current verification methods (Ed25519, secp256k1)
         are vulnerable to cryptographically-relevant quantum computers. See
-        <a href="#pqc">&sect;8.1 Post-Quantum Cryptography Migration</a> for the transition plan.</li>
+        <a href="#pqc">&sect;9.1 Post-Quantum Cryptography Migration</a> for the transition plan.</li>
       <li><strong>DID registration is not implicit.</strong> Unlike methods where registration is
         automatic (e.g., <code>did:key</code>), <code>did:sns</code> requires an explicit on-chain
         write transaction to store DID metadata in the raw data buffer via the Name Service Program&rsquo;s
@@ -1224,9 +1496,9 @@ Phase 4: Namespace Migration (optional)
         verification.</li>
     </ul>
 
-    <!-- ─── 8.1 Post-Quantum Cryptography Migration ─────────────── -->
+    <!-- ─── 9.1 Post-Quantum Cryptography Migration ─────────────── -->
 
-    <h3 id="pqc">8.1 Post-Quantum Cryptography Migration</h3>
+    <h3 id="pqc">9.1 Post-Quantum Cryptography Migration</h3>
 
     <p>The current <code>did:sns</code> verification methods rely on Ed25519 (signatures) and
     secp256k1 (ECIES encryption), both of which are vulnerable to Shor&rsquo;s algorithm
@@ -1306,7 +1578,7 @@ Phase 4: Namespace Migration (optional)
       <strong>Harvest-now-decrypt-later:</strong> Encrypted VP payloads created today with ECIES
       are at risk of future quantum decryption. For high-sensitivity credentials (financial, medical),
       implementers SHOULD begin using ML-KEM-768 hybrid encryption in Phase 2, even before
-      the full PQ transition. The dual-key Shamir architecture (2-of-2 VMK split, with 2-of-3 social
+      the full PQ transition. The dual-key architecture (2-of-2 XOR VMK split, with 2-of-3 Shamir social
       recovery on the user share) provides an additional defense layer &mdash; an attacker
       must compromise both shares, and the user share itself is recoverable only with
       two of three sub-shares (device, cloud backup, guardian).
@@ -1314,7 +1586,7 @@ Phase 4: Namespace Migration (optional)
 
     <!-- ─── 8.2 Vault Key Architecture & Social Recovery ──────────── -->
 
-    <h3 id="vault-keys">8.2 Vault Key Architecture &amp; Social Recovery</h3>
+    <h3 id="vault-keys">9.2 Vault Key Architecture &amp; Social Recovery</h3>
 
     <p>Attestto ID credentials at Tier 3 (Self-Sovereign) use a hierarchical key architecture
     to protect encrypted proof payloads. No single party &mdash; including Attestto &mdash; can
@@ -1422,7 +1694,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
 
     <!-- ─── 8.3 Stateless Resolution — No DID Log ──────────────── -->
 
-    <h3 id="no-did-log">8.3 Stateless Resolution &mdash; No DID Log</h3>
+    <h3 id="no-did-log">9.3 Stateless Resolution &mdash; No DID Log</h3>
 
     <p>Some DID methods (notably <code>did:webvh</code>) maintain an <strong>append-only DID Log</strong> &mdash;
     a JSON Lines file where every key rotation, metadata update, and witness proof adds a new entry.
@@ -1431,7 +1703,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
     signature and key sizes grow by orders of magnitude.</p>
 
     <p><code>did:sns</code> uses a fundamentally different model: a <strong>mutable state buffer</strong>
-    (160&ndash;192 bytes) that is overwritten in place on the Solana blockchain. There is no log to
+    (160 bytes) that is overwritten in place on the Solana blockchain. There is no log to
     accumulate, no replay to perform, and no witness proofs to store.</p>
 
     <h4>Why This Matters</h4>
@@ -1446,7 +1718,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
       <tr>
         <td><strong>Storage growth</strong></td>
         <td>Unbounded &mdash; the log can never shrink. Every change is permanent</td>
-        <td><strong>Fixed 192 bytes</strong> &mdash; the buffer is overwritten, not appended</td>
+        <td><strong>Fixed 160 bytes</strong> &mdash; the buffer is overwritten, not appended</td>
       </tr>
       <tr>
         <td><strong>Witness proofs</strong></td>
@@ -1456,7 +1728,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
       <tr>
         <td><strong>Compression effectiveness</strong></td>
         <td>~30&ndash;50% on JSON overhead, minimal on PQ signatures (high-entropy bytes)</td>
-        <td><strong>Not needed</strong> &mdash; 192 bytes is already smaller than a single PQ signature</td>
+        <td><strong>Not needed</strong> &mdash; 160 bytes is already smaller than a single PQ signature</td>
       </tr>
     </table>
 
@@ -1506,7 +1778,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
       <li><strong>PQ keys are hashed, not stored inline.</strong> The <code>HAS_PQ</code> flag
         (<code>0x20</code>) signals post-quantum keys exist. Full PQ public keys (1&ndash;2 KB) are
         stored in the SAS attestation (variable-length Borsh serialization), while the SNS buffer
-        stores only a hash reference. The buffer stays at 192 bytes regardless of PQ key size.</li>
+        stores only a hash reference. The buffer stays at 160 bytes regardless of PQ key size.</li>
       <li><strong>History on demand, not by default.</strong> When an auditor needs the full rotation
         history, they query Solana&rsquo;s <code>getSignaturesForAddress</code> +
         <code>getTransaction</code> APIs. This history is maintained by Solana&rsquo;s archival
@@ -1517,7 +1789,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
     <div class="note note-green">
       <strong>Key insight:</strong> DID Log methods conflate <em>current state</em> with
       <em>history</em>. The log IS the DID &mdash; you must replay it to get the current document.
-      <code>did:sns</code> separates these completely: current state = SNS buffer (192 bytes, O(1) read);
+      <code>did:sns</code> separates these completely: current state = SNS buffer (160 bytes, O(1) read);
       history = Solana transaction log (queried only when auditors need provenance).
     </div>
 
@@ -1625,7 +1897,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
       only accessed when an auditor explicitly needs it. Normal resolution (the 99.9% case) never
       touches the transaction log. With DID Log methods, the entire history is <em>mandatory</em>
       on every resolution &mdash; you cannot resolve the current state without replaying the log.
-      <code>did:sns</code> separates the hot path (192-byte buffer read) from the cold path
+      <code>did:sns</code> separates the hot path (160-byte buffer read) from the cold path
       (historical transaction query), keeping resolution O(1) while preserving full auditability.
     </div>
 
@@ -1646,7 +1918,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
       <tr>
         <td>CBOR/gzip compression</td>
         <td>~30&ndash;50% reduction on JSON, minimal on PQ signatures</td>
-        <td>Not needed &mdash; 192 bytes is already smaller than one PQ signature</td>
+        <td>Not needed &mdash; 160 bytes is already smaller than one PQ signature</td>
       </tr>
       <tr>
         <td>Key hashing (store hash, not full key)</td>
@@ -1655,9 +1927,9 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
       </tr>
     </table>
 
-    <!-- ─── 8.4 Schema Version Migration Path ────────────────────── -->
+    <!-- ─── 9.4 Schema Version Migration Path ────────────────────── -->
 
-    <h3 id="schema-migration">8.4 Schema Version Migration Path</h3>
+    <h3 id="schema-migration">9.4 Schema Version Migration Path</h3>
 
     <p>The SNS data buffer schema is versioned (byte 4). Migration from v2 to a future v3 schema
     follows a defined path to accommodate post-quantum key sizes and future extensions:</p>
@@ -1706,13 +1978,13 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
 
     <!-- ─── 9. Privacy Considerations ────────────────────────────── -->
 
-    <h2 id="privacy">9. Privacy Considerations</h2>
+    <h2 id="privacy">10. Privacy Considerations</h2>
     <ul>
       <li><strong>Selective disclosure.</strong> SD-JWT (<a href="https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/">draft-ietf-oauth-sd-jwt</a>) enables per-field disclosure with
         individual salt and hash per attribute.</li>
       <li><strong>ZKP predicates.</strong> BBS+ signatures for unlinkable proofs
         (e.g., age &ge; 18, country membership) without revealing the underlying value.</li>
-      <li><strong>Consent-gated access.</strong> 2-of-2 Shamir key-splitting for high-assurance credentials.
+      <li><strong>Consent-gated access.</strong> 2-of-2 XOR key-splitting for high-assurance credentials.
         Neither the platform nor the user alone can decrypt proof data.</li>
       <li><strong>Correlation risk.</strong> SNS names are public. Users requiring unlinkability should use
         fresh subdomains per relationship or ZKP-based presentations.</li>
@@ -1727,7 +1999,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
 
     <!-- ─── 10. Interoperability ─────────────────────────────────── -->
 
-    <h2 id="interop">10. Interoperability</h2>
+    <h2 id="interop">11. Interoperability</h2>
 
     <p><code>did:sns</code> is designed to be usable outside the Attestto platform. Every layer binds
     to an existing standard or protocol so that identities, credentials, and presentations work with
@@ -1784,7 +2056,7 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
         <td><strong>Key Types</strong></td>
         <td>Ed25519 (RFC 8032), secp256k1 (ECIES), ML-DSA-44 / ML-KEM-768 (FIPS 203/204)</td>
         <td>Standard key types &mdash; no proprietary cryptography. Post-quantum hybrid mode defined
-          for the transition period (see <a href="#pqc">&sect;8.1</a>).</td>
+          for the transition period (see <a href="#pqc">&sect;9.1</a>).</td>
       </tr>
       <tr>
         <td><strong>JSON-LD Context</strong></td>
@@ -1812,10 +2084,11 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
 
     <!-- ─── 11. References ───────────────────────────────────────── -->
 
-    <h2 id="references">11. References</h2>
+    <h2 id="references">12. References</h2>
     <table>
       <tr><th>Reference</th><th>URL</th></tr>
       <tr><td>W3C DID Core v1.1</td><td><a href="https://www.w3.org/TR/did-core/">w3.org/TR/did-core</a></td></tr>
+      <tr><td>W3C DID Use Cases and Requirements</td><td><a href="https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/">w3.org/TR/did-use-cases</a></td></tr>
       <tr><td>W3C DID Spec Registries</td><td><a href="https://www.w3.org/TR/did-spec-registries/">w3.org/TR/did-spec-registries</a></td></tr>
       <tr><td>DID Resolution v0.3</td><td><a href="https://w3c.github.io/did-resolution/">w3c-ccg.github.io/did-resolution</a></td></tr>
       <tr><td>Solana SPL Name Service</td><td><a href="https://github.com/SolanaNameService/sns-sdk">spl.solana.com/name-service</a></td></tr>
