@@ -95,6 +95,7 @@
       <a href="#metadata">On-Chain Metadata</a>
       <a href="#lifecycle">Lifecycle</a>
       <a href="#security">Security</a>
+      <a href="#interop">Interoperability</a>
       <a href="../report/">Implementation Report</a>
       <a href="../charter/">Community Charter</a>
       <a href="../ip-affirmation/">IP Affirmation</a>
@@ -309,7 +310,28 @@ label           = 1*( ALPHA / DIGIT / "-" )</code></pre>
         (on-chain pointer becomes meaningless).</li>
     </ul>
 
-    <h2>8. References</h2>
+    <h2>8. Interoperability</h2>
+
+    <p>Every layer binds to existing standards so <code>did:sns</code> identities work outside the
+    Attestto platform:</p>
+
+    <table>
+      <tr><th>Layer</th><th>Standard</th><th>Integration</th></tr>
+      <tr><td>DID Resolution</td><td>W3C DID Core v1.1</td><td>Universal Resolver driver &mdash; any DIF resolver can resolve <code>did:sns</code></td></tr>
+      <tr><td>Credentials</td><td>SD-JWT-VC</td><td>Standard JWT verification with any JOSE library</td></tr>
+      <tr><td>Agent Frameworks</td><td>Credo-TS 0.6</td><td>Registered resolver module &mdash; Credo agents issue/verify natively</td></tr>
+      <tr><td>Credential API</td><td>W3C Credential Management</td><td>Browser extension bridges <code>navigator.credentials</code></td></tr>
+      <tr><td>Presentations</td><td>DIDComm v2</td><td>P2P encrypted channel &mdash; works with any DIDComm v2 implementation</td></tr>
+      <tr><td>Status Lists</td><td>W3C Bitstring Status List</td><td>Public revocation URLs &mdash; any W3C verifier can check</td></tr>
+      <tr><td>Org Identity</td><td>GLEIF vLEI</td><td>vLEI Bridge maps LEI credentials to SAS attestations</td></tr>
+      <tr><td>DNS Discovery</td><td>DNS TXT records</td><td>Web2 domains alias to <code>did:sns</code> via <code>_did</code> TXT</td></tr>
+    </table>
+
+    <p>A verifier who has never heard of Attestto can resolve, verify, and check status end-to-end
+    using only open standards.
+    See <a href="../#interop">&sect;10 of the full spec</a> for details.</p>
+
+    <h2>9. References</h2>
     <ul>
       <li><a href="https://www.w3.org/TR/did-core/">W3C DID Core v1.0</a></li>
       <li><a href="https://www.w3.org/TR/did-spec-registries/">W3C DID Spec Registries</a></li>
