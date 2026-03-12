@@ -93,6 +93,7 @@
       <a href="#resolution">Resolution</a>
       <a href="#document">DID Document</a>
       <a href="#metadata">On-Chain Metadata</a>
+      <a href="#lifecycle">Lifecycle</a>
       <a href="#security">Security</a>
       <a href="../report/">Implementation Report</a>
       <a href="../charter/">Community Charter</a>
@@ -231,9 +232,31 @@ label           = 1*( ALPHA / DIGIT / "-" )</code></pre>
       <tr><td>0x04</td><td><code>IS_TIER3</code></td><td>Self-Sovereign ID (Attestto SSID)</td></tr>
       <tr><td>0x08</td><td><code>HAS_LEI</code></td><td>LEI/vLEI credential linked</td></tr>
       <tr><td>0x10</td><td><code>HAS_SAS</code></td><td>SAS attestation linked</td></tr>
+      <tr><td>0x20</td><td><code>HAS_PQ</code></td><td>Post-quantum keys in SAS attestation</td></tr>
     </table>
 
-    <h2 id="security">5. Security Considerations</h2>
+    <h2 id="lifecycle">5. DID Lifecycle: Issue Once, Evolve Forever</h2>
+
+    <p>A <code>did:sns</code> identifier is created <strong>once</strong> and never re-issued. The DID
+    persists across key rotations, wallet migrations, KYC upgrades, and custodial changes. Only
+    permanent deactivation ends a DID&rsquo;s life.</p>
+
+    <table>
+      <tr><th>Event</th><th>DID Identifier</th><th>What Changes</th></tr>
+      <tr><td>Key rotation (wallet transfer)</td><td>Unchanged</td><td><code>#solana-key</code> verification method</td></tr>
+      <tr><td>KYC/LEI credential update</td><td>Unchanged</td><td>New SAS attestation PDA</td></tr>
+      <tr><td>Tier upgrade (1 &rarr; 2 &rarr; 3)</td><td>Unchanged</td><td>Flags, new verification methods</td></tr>
+      <tr><td>Encryption key rotation</td><td>Unchanged</td><td>ECIES public key in buffer</td></tr>
+      <tr><td>Suspension / recovery</td><td>Unchanged</td><td>Active flag cleared / restored</td></tr>
+      <tr><td>Organizational transfer</td><td><strong>New DID</strong></td><td>New domain = new DID (linked via <code>alsoKnownAs</code>)</td></tr>
+      <tr><td>Deactivation</td><td>Frozen</td><td><code>deactivated: true</code>; resolvable for audit only</td></tr>
+    </table>
+
+    <p>The DID identifier is a <em>name</em>, not a <em>key</em>. Names persist; keys rotate.
+    See <a href="../#no-did-log">&sect;8.3 of the full spec</a> for the detailed lifecycle
+    phases and comparison with other DID lifecycle models.</p>
+
+    <h2 id="security">6. Security Considerations</h2>
     <ul>
       <li><strong>No PII on-chain.</strong> All personal data is stored in encrypted Data Vaults.
         On-chain stores only an <code>identity_hash</code> (SHA-256 commitment).</li>
@@ -243,9 +266,23 @@ label           = 1*( ALPHA / DIGIT / "-" )</code></pre>
         attestation UID) and SAS&#8594;SNS (via <code>did_reference</code> field) prevents attestation spoofing.</li>
       <li><strong>Deactivation detection.</strong> Zero-owner check returns <code>deactivated: true</code>
         in document metadata.</li>
+      <li><strong>Stateless resolution &mdash; no DID Log.</strong> Unlike log-based methods
+        (<code>did:webvh</code>), <code>did:sns</code> uses a fixed 192-byte mutable buffer.
+        Resolution is O(1) regardless of identity age. No accumulated signatures, no log replay.
+        This makes <code>did:sns</code> structurally immune to post-quantum log bloat (PQ signatures
+        are 2&ndash;17 KB each; a 5-year DID log could reach 1&ndash;4 MB).
+        See <a href="../#no-did-log">&sect;8.3 of the full spec</a>.</li>
+      <li><strong>Full audit trail via Solana transaction history.</strong> Every buffer mutation is a
+        signed, validator-attested transaction. Auditors can filter by signer (previous owner, platform
+        authority) and reconstruct the complete chronological history without a DID Log.
+        See <a href="../#no-did-log">&sect;8.3 of the full spec</a>.</li>
+      <li><strong>Post-quantum readiness.</strong> <code>HAS_PQ</code> flag reserved. PQ keys
+        (ML-DSA-44, ML-KEM-768) stored in SAS attestation layer, referenced by hash in the fixed-size
+        buffer. Hybrid mode (classical + PQ) defined for the transition period.
+        See <a href="../#pqc">&sect;8.1 of the full spec</a>.</li>
     </ul>
 
-    <h2 id="privacy">6. Privacy Considerations</h2>
+    <h2 id="privacy">7. Privacy Considerations</h2>
     <ul>
       <li><strong>Selective disclosure.</strong> SD-JWT (RFC 9449) enables per-field disclosure with salted hashes.</li>
       <li><strong>ZKP predicates.</strong> BBS+ signatures for unlinkable proofs (age verification, country membership).</li>
@@ -254,7 +291,7 @@ label           = 1*( ALPHA / DIGIT / "-" )</code></pre>
         (on-chain pointer becomes meaningless).</li>
     </ul>
 
-    <h2>7. References</h2>
+    <h2>8. References</h2>
     <ul>
       <li><a href="https://www.w3.org/TR/did-core/">W3C DID Core v1.0</a></li>
       <li><a href="https://www.w3.org/TR/did-spec-registries/">W3C DID Spec Registries</a></li>

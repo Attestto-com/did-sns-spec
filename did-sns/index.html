@@ -146,6 +146,7 @@
             <li><a href="#op-read">Read (Resolve)</a></li>
             <li><a href="#op-update">Update</a></li>
             <li><a href="#op-deactivate">Deactivate</a></li>
+            <li><a href="#lifecycle">DID Lifecycle: Issue Once, Evolve Forever</a></li>
           </ol>
         </li>
         <li><a href="#metadata">On-Chain Metadata Schema</a></li>
@@ -154,6 +155,8 @@
           <ol>
             <li><a href="#pqc">Post-Quantum Cryptography Migration</a></li>
             <li><a href="#vault-keys">Vault Key Architecture &amp; Social Recovery</a></li>
+            <li><a href="#no-did-log">Stateless Resolution &mdash; No DID Log</a></li>
+            <li><a href="#schema-migration">Schema Version Migration Path</a></li>
           </ol>
         </li>
         <li><a href="#privacy">Privacy Considerations</a></li>
@@ -714,6 +717,161 @@ Key A (original owner)                event                Key B (new owner)
       must be permanently retired.
     </div>
 
+    <!-- ─── 5.5 DID Lifecycle ─────────────────────────────────────── -->
+
+    <h3 id="lifecycle">5.5 DID Lifecycle: Issue Once, Evolve Forever</h3>
+
+    <p>A <code>did:sns</code> identifier is created <strong>once</strong> and never re-issued. The DID
+    persists across key rotations, wallet migrations, custodial changes, KYC level upgrades,
+    credential issuance, and organizational restructuring. Only permanent deactivation (&sect;5.4)
+    ends a DID&rsquo;s life &mdash; and even then the identifier remains resolvable (with
+    <code>deactivated: true</code>) to preserve audit history.</p>
+
+    <p>This &ldquo;issue once, evolve forever&rdquo; model is a deliberate architectural choice that
+    contrasts with DID methods where identity changes require re-issuance or accumulate an
+    ever-growing log of historical states.</p>
+
+    <h4>Lifecycle Phases</h4>
+
+    <table>
+      <tr><th>Phase</th><th>Trigger</th><th>DID Identifier</th><th>What Changes</th><th>What Stays</th></tr>
+      <tr>
+        <td><strong>Creation</strong></td>
+        <td>SNS domain registration + DID metadata write</td>
+        <td>Minted</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
+      </tr>
+      <tr>
+        <td><strong>Attestation</strong></td>
+        <td>SAS attestation linked (KYC, vLEI, etc.)</td>
+        <td>Unchanged</td>
+        <td>SAS UID in buffer, <code>HAS_SAS</code> flag set</td>
+        <td>DID, domain, owner key</td>
+      </tr>
+      <tr>
+        <td><strong>Key Rotation</strong></td>
+        <td>Domain transferred to new wallet</td>
+        <td>Unchanged</td>
+        <td><code>#solana-key</code> verification method</td>
+        <td>DID, domain name, SAS attestation, service endpoints</td>
+      </tr>
+      <tr>
+        <td><strong>Credential Update</strong></td>
+        <td>KYC level change, LEI verification, status change</td>
+        <td>Unchanged</td>
+        <td>New SAS attestation PDA (old one closed)</td>
+        <td>DID, domain, all keys, service endpoints</td>
+      </tr>
+      <tr>
+        <td><strong>Tier Upgrade</strong></td>
+        <td>User graduates from Tier 1 &rarr; 2 &rarr; 3</td>
+        <td>Unchanged</td>
+        <td>Flags (IS_TIER3, HAS_SBT), new verification methods</td>
+        <td>DID, domain, existing keys</td>
+      </tr>
+      <tr>
+        <td><strong>Encryption Key Rotation</strong></td>
+        <td>ECIES key compromised or scheduled rotation</td>
+        <td>Unchanged</td>
+        <td>ECIES public key in buffer</td>
+        <td>DID, domain, owner key, SAS attestation</td>
+      </tr>
+      <tr>
+        <td><strong>Organizational Transfer</strong></td>
+        <td>User moves from <code>alice.bankA.sol</code> to <code>alice.bankB.sol</code></td>
+        <td><strong>New DID</strong></td>
+        <td>New domain = new DID (linked via <code>alsoKnownAs</code>)</td>
+        <td>SAS attestation can reference previous DID</td>
+      </tr>
+      <tr>
+        <td><strong>Suspension</strong></td>
+        <td>Compliance hold, fraud investigation</td>
+        <td>Unchanged</td>
+        <td>Active flag cleared; SAS attestation closed</td>
+        <td>DID remains resolvable but non-functional</td>
+      </tr>
+      <tr>
+        <td><strong>Recovery</strong></td>
+        <td>Identity re-verified after suspension</td>
+        <td>Unchanged</td>
+        <td>Active flag restored; new SAS attestation created</td>
+        <td>DID, domain (same identifier through the entire cycle)</td>
+      </tr>
+      <tr>
+        <td><strong>Deactivation</strong></td>
+        <td>Permanent retirement (owner &rarr; zero address)</td>
+        <td>Frozen</td>
+        <td><code>deactivated: true</code> in metadata</td>
+        <td>DID resolvable for audit; cannot be used for new operations</td>
+      </tr>
+    </table>
+
+    <h4>Contrast with Other Lifecycle Models</h4>
+
+    <table>
+      <tr><th>Model</th><th>Methods</th><th>Lifecycle Behavior</th><th>PQ Scaling Impact</th></tr>
+      <tr>
+        <td><strong>Ephemeral (one key = one DID)</strong></td>
+        <td><code>did:key</code></td>
+        <td>No rotation possible. Key compromise = new DID. No continuity.</td>
+        <td>None (no history)</td>
+      </tr>
+      <tr>
+        <td><strong>Log-based (append-only history)</strong></td>
+        <td><code>did:webvh</code>, <code>did:peer</code> (with history)</td>
+        <td>DID persists but accumulates full change log. Every rotation, witness proof, and
+          metadata update adds an entry. Resolver must replay the entire log.</td>
+        <td><strong>Severe</strong> &mdash; PQ signatures (2&ndash;17 KB each) accumulate in every
+          log entry. 5-year DID: 1&ndash;4 MB log (see <a href="#no-did-log">&sect;8.3</a>).</td>
+      </tr>
+      <tr>
+        <td><strong>Document-hosted (fetch current)</strong></td>
+        <td><code>did:web</code></td>
+        <td>DID persists. Current state only (no built-in history). Relies on web server availability.</td>
+        <td>Low (only current doc)</td>
+      </tr>
+      <tr>
+        <td><strong>Mutable state (overwrite in place)</strong></td>
+        <td><strong><code>did:sns</code></strong></td>
+        <td>DID persists. Current state overwritten in fixed-size buffer. History delegated to
+          blockchain&rsquo;s native transaction log. O(1) resolution always.</td>
+        <td><strong>None</strong> &mdash; buffer is 192 bytes regardless of key/sig sizes. PQ keys
+          stored in SAS layer, referenced by hash.</td>
+      </tr>
+    </table>
+
+    <h4>Why &ldquo;Issue Once&rdquo; Matters for Regulated Environments</h4>
+
+    <p>In banking, compliance, and cross-border payments, identifier stability is a regulatory
+    requirement. A user&rsquo;s identity must survive:</p>
+
+    <ul>
+      <li><strong>Key compromise recovery</strong> &mdash; the user gets a new wallet, but their
+        identity (and all linked credentials, SAS attestations, and audit history) must continue
+        under the same identifier. Re-issuing a DID would break every verifier&rsquo;s reference
+        to that identity.</li>
+      <li><strong>Custodial transitions</strong> &mdash; a user moves from one bank to another,
+        or the platform migrates infrastructure. The DID must not change because external parties
+        (BCCR, Circle, GLEIF) hold references to it.</li>
+      <li><strong>Cryptographic evolution</strong> &mdash; when the industry transitions from
+        Ed25519 to ML-DSA-44, the DID must survive the key migration. With <code>did:sns</code>,
+        this is a buffer update (new flag + SAS key storage), not a DID re-issuance.</li>
+      <li><strong>Compliance continuity</strong> &mdash; auditors need a stable identifier to
+        trace the full history of an entity. If the DID changes, the audit trail fragments.
+        <code>did:sns</code> keeps one identifier from creation through every lifecycle event
+        to final deactivation.</li>
+    </ul>
+
+    <div class="note note-green">
+      <strong>Design principle:</strong> The DID identifier is a <em>name</em>, not a <em>key</em>.
+      Names persist; keys rotate. The SNS domain (<code>alice.crbank.sol</code>) is the stable anchor.
+      Everything underneath &mdash; keys, attestations, credentials, encryption methods &mdash;
+      evolves independently without disturbing the identifier. This is the &ldquo;Living DID&rdquo;
+      concept: the identity is always current, never re-issued, and never accumulates historical
+      baggage in its resolution path.
+    </div>
+
     <!-- ─── 6. On-Chain Metadata Schema ──────────────────────────── -->
 
     <h2 id="metadata">6. On-Chain Metadata Schema</h2>
@@ -1035,6 +1193,290 @@ Any 2 of 3 sub-shares reconstruct Share A</div>
       device simultaneously. Even then, recovering Share A from a compromised device
       requires 2 of the 3 social recovery sub-shares.
     </div>
+
+    <!-- ─── 8.3 Stateless Resolution — No DID Log ──────────────── -->
+
+    <h3 id="no-did-log">8.3 Stateless Resolution &mdash; No DID Log</h3>
+
+    <p>Some DID methods (notably <code>did:webvh</code>) maintain an <strong>append-only DID Log</strong> &mdash;
+    a JSON Lines file where every key rotation, metadata update, and witness proof adds a new entry.
+    To resolve the current DID Document, a verifier must fetch the entire log and replay every entry.
+    This design creates compounding scalability concerns, particularly in a post-quantum future where
+    signature and key sizes grow by orders of magnitude.</p>
+
+    <p><code>did:sns</code> uses a fundamentally different model: a <strong>mutable state buffer</strong>
+    (160&ndash;192 bytes) that is overwritten in place on the Solana blockchain. There is no log to
+    accumulate, no replay to perform, and no witness proofs to store.</p>
+
+    <h4>Why This Matters</h4>
+
+    <table>
+      <tr><th>Concern</th><th>DID Log Methods</th><th><code>did:sns</code></th></tr>
+      <tr>
+        <td><strong>Resolution cost</strong></td>
+        <td>O(n) &mdash; grows linearly with identity age. A 5-year DID with monthly rotations requires fetching and verifying 60+ log entries</td>
+        <td><strong>O(1)</strong> &mdash; always 2 RPC calls (SNS PDA + SAS PDA), regardless of identity age</td>
+      </tr>
+      <tr>
+        <td><strong>Storage growth</strong></td>
+        <td>Unbounded &mdash; the log can never shrink. Every change is permanent</td>
+        <td><strong>Fixed 192 bytes</strong> &mdash; the buffer is overwritten, not appended</td>
+      </tr>
+      <tr>
+        <td><strong>Witness proofs</strong></td>
+        <td>Stored in log or separate file. Inlining prevents pruning; separate file adds complexity</td>
+        <td><strong>Not applicable</strong> &mdash; Solana&rsquo;s PoS consensus (2/3 stake-weighted validators) provides native witnessing at the infrastructure layer</td>
+      </tr>
+      <tr>
+        <td><strong>Compression effectiveness</strong></td>
+        <td>~30&ndash;50% on JSON overhead, minimal on PQ signatures (high-entropy bytes)</td>
+        <td><strong>Not needed</strong> &mdash; 192 bytes is already smaller than a single PQ signature</td>
+      </tr>
+    </table>
+
+    <h4>Post-Quantum Signature Size Impact on DID Logs</h4>
+
+    <p>Current NIST post-quantum signature schemes have dramatically larger outputs compared to Ed25519:</p>
+
+    <table>
+      <tr><th>Scheme</th><th>Public Key</th><th>Signature</th><th>vs. Ed25519 (32B key, 64B sig)</th></tr>
+      <tr><td>ML-DSA-65 (Dilithium)</td><td>1,952 B</td><td>3,309 B</td><td>~60&times; key, ~52&times; sig</td></tr>
+      <tr><td>SLH-DSA-128f (SPHINCS+)</td><td>32 B</td><td>17,088 B</td><td>Same key, <strong>267&times; sig</strong></td></tr>
+      <tr><td>FALCON-512</td><td>897 B</td><td>690 B</td><td>~28&times; key, ~11&times; sig</td></tr>
+    </table>
+
+    <p>For a DID Log method, every entry contains at least one public key and one signature. With 3 witnesses per entry:</p>
+
+    <table>
+      <tr><th>Scenario</th><th>Classical (Ed25519)</th><th>ML-DSA-65</th><th>SLH-DSA-128f</th></tr>
+      <tr>
+        <td>Single log entry (1 key + 1 sig + 3 witness sigs)</td>
+        <td>~288 B</td>
+        <td>~18 KB</td>
+        <td>~69 KB</td>
+      </tr>
+      <tr>
+        <td>5-year DID (60 rotations)</td>
+        <td>~17 KB</td>
+        <td><strong>~1.1 MB</strong></td>
+        <td><strong>~4.1 MB</strong></td>
+      </tr>
+    </table>
+
+    <p>Compression provides marginal relief because PQ signatures are high-entropy (near-random bytes
+    that do not compress well). CBOR encoding saves a few percent on JSON overhead but does not address
+    the core problem: signatures dominate the log content.</p>
+
+    <h4>How <code>did:sns</code> Avoids This Entirely</h4>
+
+    <ol>
+      <li><strong>No accumulated signatures.</strong> The buffer contains the <em>current</em> state only.
+        Key rotations overwrite the previous key; they do not append alongside it. There are zero
+        historical signatures in the DID data.</li>
+      <li><strong>Signatures live in Solana transactions.</strong> When a key rotation occurs, the
+        authorization signature is part of the Solana transaction (validated by validators at block time
+        and stored in the blockchain&rsquo;s native transaction log). The DID buffer never contains
+        signatures &mdash; only public keys and hashes.</li>
+      <li><strong>PQ keys are hashed, not stored inline.</strong> The <code>HAS_PQ</code> flag
+        (<code>0x20</code>) signals post-quantum keys exist. Full PQ public keys (1&ndash;2 KB) are
+        stored in the SAS attestation (variable-length Borsh serialization), while the SNS buffer
+        stores only a hash reference. The buffer stays at 192 bytes regardless of PQ key size.</li>
+      <li><strong>History on demand, not by default.</strong> When an auditor needs the full rotation
+        history, they query Solana&rsquo;s <code>getSignaturesForAddress</code> +
+        <code>getTransaction</code> APIs. This history is maintained by Solana&rsquo;s archival
+        infrastructure, not by the DID method. The cost of history retrieval is borne only by
+        auditors who need it, not by every resolver on every resolution.</li>
+    </ol>
+
+    <div class="note note-green">
+      <strong>Key insight:</strong> DID Log methods conflate <em>current state</em> with
+      <em>history</em>. The log IS the DID &mdash; you must replay it to get the current document.
+      <code>did:sns</code> separates these completely: current state = SNS buffer (192 bytes, O(1) read);
+      history = Solana transaction log (queried only when auditors need provenance).
+    </div>
+
+    <h4>Audit Trail Without a DID Log</h4>
+
+    <p>Although <code>did:sns</code> does not maintain an explicit DID Log, it provides equivalent &mdash;
+    and in some respects superior &mdash; auditability through Solana&rsquo;s native transaction history:</p>
+
+    <ol>
+      <li><strong>Every buffer mutation is a signed transaction.</strong> Solana records the signer,
+        timestamp, slot, and instruction data for every <code>update</code> call to the Name Service
+        Program. This provides a tamper-evident, validator-attested history of every change.</li>
+      <li><strong>SAS attestation history is independently auditable.</strong> Each
+        <code>createTokenizedAttestation</code> and <code>closeAttestation</code> call is a separate
+        on-chain transaction with its own signer and timestamp.</li>
+      <li><strong>No replay required for verification.</strong> An auditor can verify the current state
+        directly (buffer + SAS attestation are self-contained) and independently inspect history for
+        compliance purposes. A compromised historical entry does not invalidate the current state if
+        the current SAS attestation is valid.</li>
+      <li><strong>Validator-attested timestamps.</strong> Solana slot times provide consensus-validated
+        timestamps. DID Log methods must rely on self-reported timestamps or external witnesses;
+        Solana&rsquo;s timestamps are attested by the supermajority of stake-weighted validators.</li>
+      <li><strong>Signer-level filtering.</strong> Because every transaction records the signing key,
+        auditors can reconstruct the complete history filtered by actor &mdash; showing only actions
+        by a specific domain owner, platform authority, or authorized signer.</li>
+    </ol>
+
+    <h4>Historical Transaction Record</h4>
+
+    <p>Solana preserves the full signed transaction history for every account. For a <code>did:sns</code>
+    domain, this means every buffer write, ownership transfer, and SAS attestation link is recorded
+    with the signer&rsquo;s public key, the slot timestamp, and the instruction data (including the
+    bytes written). The following illustrates what an auditor sees when querying the transaction log
+    for a domain account:</p>
+
+    <table>
+      <tr><th>Slot</th><th>Date</th><th>Signer</th><th>Action</th><th>Data Changed</th></tr>
+      <tr>
+        <td>28901234</td><td>2026-01-15</td>
+        <td>Platform Wallet</td>
+        <td>Create subdomain + write DID metadata</td>
+        <td>magic=<code>0x44494401</code>, flags=<code>0x00</code>, owner=WalletA</td>
+      </tr>
+      <tr>
+        <td>29100456</td><td>2026-03-01</td>
+        <td>Platform Authority</td>
+        <td>Link SAS attestation (KYC Level 2)</td>
+        <td>flags=<code>0x01</code> (<code>HAS_SAS</code>), sasUid=PDA_xyz</td>
+      </tr>
+      <tr>
+        <td>30200789</td><td>2026-06-15</td>
+        <td>WalletA (previous owner)</td>
+        <td>Transfer domain ownership</td>
+        <td>owner: WalletA &rarr; WalletB</td>
+      </tr>
+      <tr>
+        <td>30200801</td><td>2026-06-15</td>
+        <td>Platform Authority</td>
+        <td>Rotate ECIES key (post-transfer)</td>
+        <td>eciesKey: old &rarr; new</td>
+      </tr>
+      <tr>
+        <td>35400123</td><td>2026-11-01</td>
+        <td>WalletB (current owner)</td>
+        <td>Update vault endpoint</td>
+        <td>vaultEndpointHash changed</td>
+      </tr>
+    </table>
+
+    <h4>Auditor Query Patterns</h4>
+
+    <p>All queries use Solana&rsquo;s standard RPC API (<code>getSignaturesForAddress</code> +
+    <code>getTransaction</code>). No custom indexer or DID-specific log format is required:</p>
+
+    <table>
+      <tr><th>Auditor Question</th><th>Query Method</th></tr>
+      <tr>
+        <td>What did the <strong>previous domain owner</strong> do?</td>
+        <td>Filter transactions where <code>signer === WalletA</code></td>
+      </tr>
+      <tr>
+        <td>What did the <strong>platform</strong> authorize?</td>
+        <td>Filter transactions where <code>signer === PlatformAuthority</code></td>
+      </tr>
+      <tr>
+        <td>When was <strong>ownership transferred</strong>?</td>
+        <td>Look for <code>Transfer</code> instruction with owner field change</td>
+      </tr>
+      <tr>
+        <td>What was the SAS attestation <strong>before</strong> the last update?</td>
+        <td>Read instruction data from the previous SAS-related transaction</td>
+      </tr>
+      <tr>
+        <td>Full <strong>chronological timeline</strong>?</td>
+        <td>Iterate all transactions for the domain PDA in slot order</td>
+      </tr>
+      <tr>
+        <td>Did a <strong>specific signer</strong> ever touch this identity?</td>
+        <td>Filter by signer public key across all transactions</td>
+      </tr>
+    </table>
+
+    <div class="note note-green">
+      <strong>Key advantage over DID Logs:</strong> This audit history is <em>optional</em> &mdash;
+      only accessed when an auditor explicitly needs it. Normal resolution (the 99.9% case) never
+      touches the transaction log. With DID Log methods, the entire history is <em>mandatory</em>
+      on every resolution &mdash; you cannot resolve the current state without replaying the log.
+      <code>did:sns</code> separates the hot path (192-byte buffer read) from the cold path
+      (historical transaction query), keeping resolution O(1) while preserving full auditability.
+    </div>
+
+    <h4>Comparison with DID Log Mitigation Strategies</h4>
+
+    <table>
+      <tr><th>DID Log Strategy</th><th>Effectiveness</th><th><code>did:sns</code> Equivalent</th></tr>
+      <tr>
+        <td>Witness proof pruning (keep only latest)</td>
+        <td>Reduces size but requires separate proof file management</td>
+        <td>Not needed &mdash; Solana consensus is the witness layer</td>
+      </tr>
+      <tr>
+        <td>JSON Lines + incremental fetch</td>
+        <td>Verifier caches local state, fetches only new entries</td>
+        <td>Not needed &mdash; state is always a single fixed-size read</td>
+      </tr>
+      <tr>
+        <td>CBOR/gzip compression</td>
+        <td>~30&ndash;50% reduction on JSON, minimal on PQ signatures</td>
+        <td>Not needed &mdash; 192 bytes is already smaller than one PQ signature</td>
+      </tr>
+      <tr>
+        <td>Key hashing (store hash, not full key)</td>
+        <td>Reduces key storage but requires proof lookup</td>
+        <td>Native &mdash; ECIES key is 33B compressed; PQ keys hashed in SAS</td>
+      </tr>
+    </table>
+
+    <!-- ─── 8.4 Schema Version Migration Path ────────────────────── -->
+
+    <h3 id="schema-migration">8.4 Schema Version Migration Path</h3>
+
+    <p>The SNS data buffer schema is versioned (byte 4). Migration from v2 to a future v3 schema
+    follows a defined path to accommodate post-quantum key sizes and future extensions:</p>
+
+    <ol>
+      <li><strong>Buffer reallocation.</strong> The Name Service Program supports
+        <code>reallocate</code> to resize a Name Registry Account&rsquo;s data buffer. If PQ keys
+        require more than the current 25-byte reserved block, the buffer can be expanded (e.g., to
+        256 or 320 bytes) without changing the domain address or DID identifier.</li>
+      <li><strong>Version bump.</strong> The version byte changes from <code>0x02</code> to
+        <code>0x03</code>. Resolvers MUST check the version byte and apply the corresponding schema
+        layout. Unknown versions MUST be rejected with <code>VERSION_NOT_SUPPORTED</code>.</li>
+      <li><strong>Backward compatibility.</strong> Fields at offsets 0&ndash;5 (Magic, Version, Flags)
+        remain stable across all versions. Resolvers that encounter an unknown version can still
+        detect that the buffer contains DID metadata (magic bytes) and report the version mismatch.</li>
+    </ol>
+
+    <h4>PQ Key Storage Approaches</h4>
+
+    <table>
+      <tr><th>Approach</th><th>Buffer Change</th><th>Pros</th><th>Cons</th></tr>
+      <tr>
+        <td><strong>A: Hash-in-buffer, full-key-in-SAS</strong></td>
+        <td>No size change; PQ key hash in existing ECIES slot</td>
+        <td>Buffer stays 192B; PQ key retrieved from SAS only when needed</td>
+        <td>Extra RPC call for PQ key retrieval</td>
+      </tr>
+      <tr>
+        <td><strong>B: Expanded buffer with PQ key slot</strong></td>
+        <td>+64&ndash;128B for PQ compressed key</td>
+        <td>Single-read resolution; no SAS dependency for key</td>
+        <td>Larger buffer; rent cost increase (~0.001 SOL)</td>
+      </tr>
+    </table>
+
+    <div class="note">
+      <strong>Preferred approach:</strong> Approach A (hash-in-buffer) is recommended for the initial
+      PQ transition because it maintains O(1) resolution cost and fixed buffer size. Approach B may
+      be adopted if PQ key verification becomes a hot path requiring single-read resolution.
+    </div>
+
+    <p><strong>Migration rollout:</strong> Schema migration is performed per-identity by the
+    platform&rsquo;s Identity Manager wallet. There is no global migration event &mdash; each
+    subdomain is upgraded individually when its SAS attestation is next updated. The
+    <code>versionId</code> in <code>didDocumentMetadata</code> increments on migration.</p>
 
     <!-- ─── 9. Privacy Considerations ────────────────────────────── -->
 
