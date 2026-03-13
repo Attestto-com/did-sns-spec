@@ -64,11 +64,70 @@ JSON-LD contexts for W3C Verifiable Credentials in financial compliance workflow
 
 | Schema | Context URL | Regulatory Alignment |
 |---|---|---|
+| Identity Verification (KYC) | [`/credentials/v1/identity-verification.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/identity-verification.jsonld) | FATF R.10, EU AMLD6 Art. 13, CR Law 8204 Art. 15 |
 | Source of Funds (SoF) | [`/credentials/v1/source-of-funds.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/source-of-funds.jsonld) | FATF R.10, EU AMLD6 Art. 13, CR Law 8204 Art. 16 |
 | Proof of Address (PoA) | [`/credentials/v1/proof-of-address.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/proof-of-address.jsonld) | FATF R.10, EU AMLD6 Art. 13(1)(a), CR SUGEF 12-21 |
 | EDD Clearance | [`/credentials/v1/edd-clearance.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/edd-clearance.jsonld) | FATF R.19, EU AMLD6 Art. 18, CR Law 8204 Art. 17 |
 
 Each schema includes a selective disclosure companion type — verifiers can confirm a user meets a financial threshold or holds a valid EDD clearance without seeing the underlying documents or exact amounts.
+
+## W3C Requirements Coverage
+
+`did:sns` covers **21 of 22** W3C DID requirements ([full analysis](did-sns/spec/06-w3c-coverage.md)). Requirements are classified into tiers based on how many of the [18 W3C use cases](https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#uc) reference them. Structured data: [`did-sns/data/`](did-sns/data/).
+
+### Core — expected of any serious DID method
+
+| ID | Requirement | did:sns |
+|---|---|---|
+| R1 | Authentication / Proof of Control | Covered |
+| R22 | Human-Centered Interoperability | Covered |
+
+### Common — important for most implementations
+
+| ID | Requirement | did:sns |
+|---|---|---|
+| R2 | Decentralized / Self-Issued | Covered |
+| R3 | Guaranteed Unique Identifier | Covered |
+| R5 | Associated Cryptographic Material | Covered |
+| R7 | Service Endpoint Discovery | Covered |
+| R8 | Privacy Preserving | Covered |
+| R10 | Inter-Jurisdictional | Covered |
+| R13 | No Vendor Lock-In | Covered |
+| R18 | Survives Relationship with Service Provider | Covered |
+
+### Specialized — needed for specific domains
+
+| ID | Requirement | did:sns |
+|---|---|---|
+| R4 | No Call Home | Covered |
+| R6 | Streamlined Key Rotation | Covered |
+| R9 | Delegation of Control | Covered |
+| R11 | Cannot Be Administratively Denied | Covered |
+| R12 | Minimized Rents | Covered |
+| R14 | Preempt / Limit Trackable Data Trails | Covered |
+| R15 | Cryptographic Future-Proof | Covered |
+| R16 | Survives Issuing Organization Mortality | Covered |
+| R17 | Survives Deployment End-of-Life | Covered |
+| R19 | Cryptographic Authentication & Communication | Covered |
+| R20 | Registry Agnostic | **Partial** |
+| R21 | Legally-Enabled Identity | Covered |
+
+> R20 (Registry Agnostic) is partial — `did:sns` is bound to Solana/SNS, but the architecture is chain-replicable and consumers are registry-agnostic via the Universal Resolver driver.
+
+## Use Case Alignment
+
+`did:sns` maps to the following [W3C focal use cases](https://www.w3.org/TR/2021/NOTE-did-use-cases-20210317/#uc). Structured data: [`did-sns/data/use-cases.json`](did-sns/data/use-cases.json).
+
+| Use Case | Category | Requirements | did:sns Coverage |
+|---|---|---|---|
+| Enterprise Identifiers | Finance & Commerce | 17 reqs | 17/17 (100%) |
+| Life-long Credentials | Education & Workforce | 19 reqs | 19/19 (100%) |
+| Prescriptions | Healthcare | 9 reqs | 9/9 (100%) |
+| Digital Executor | Government & Legal | 18 reqs | 18/18 (100%) |
+| Portable Credentials | Finance & Commerce | 6 reqs | 6/6 (100%) |
+| Secure Communication | Privacy & Communication | 15 reqs | 14/15 (93%) |
+
+Additionally supports non-focal use cases: Online Shopper, Vehicle Assemblies, Confidential Customer Engagement, eIDAS Public Authority Credentials, Digital Permanent Resident Card, and 7 others. See [`did-sns/data/use-cases.json`](did-sns/data/use-cases.json) for the full list.
 
 ## Key Features
 
