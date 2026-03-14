@@ -23,16 +23,19 @@ did:sns:alice.crbank.sol            ← Primary anchor (credentials, vault, cons
   ├── alsoKnownAs: did:ens:alice.eth        ← Ethereum ecosystem reach
   ├── alsoKnownAs: did:pkh:solana:CKg5...   ← Universal key-proof layer
   ├── alsoKnownAs: did:web:crbank.cr         ← Bank's traditional web domain
-  └── service: ISO 20022 party data          ← SWIFT/Fedwire/SINPE compatibility
+  ├── service: ISO 20022 party data          ← SWIFT/Fedwire/SINPE compatibility
+  └── service: GLEIF vLEI bridge             ← LEI lookup, instant KYB
 ```
 
-**For traditional banks:** The `did:web` link binds to the bank's existing domain. Credential schemas map to ISO 20022 party identification structures (`pacs.008`/`pacs.009`) — the same format that SWIFT, Fedwire, TARGET2, and SINPE already use. A bank doesn't need to "go Web3" — they issue W3C credentials through their existing compliance process, and those credentials slot directly into cross-border payment messages their systems already understand.
+**For traditional banks:** The `did:web` link binds to the bank's existing domain. Credential schemas map to ISO 20022 party identification structures (`pacs.008`/`pacs.009`) — the same format that SWIFT, Fedwire, TARGET2, and SINPE already use. A bank doesn't need to "go Web3" — they issue W3C credentials through their existing compliance process, and those credentials slot directly into cross-border payment messages their systems already understand. For institutional identity, the GLEIF vLEI bridge automatically enriches the DID Document with the entity's LEI number, legal name, and jurisdiction — any counterparty can verify corporate identity against the global GLEIF registry in milliseconds.
 
-**For fintechs:** The identity works across both worlds. A fintech can verify a credential issued by a traditional bank (via `did:web`) or by a Web3 platform (via `did:ens`), using the same verification flow. One integration, both ecosystems.
+**For fintechs:** The identity works across both worlds. A fintech can verify a credential issued by a traditional bank (via `did:web`) or by a Web3 platform (via `did:ens`), using the same verification flow. One integration, both ecosystems. Corporate counterparties are instantly verifiable via the LEI embedded in their DID Document.
 
 **For Web3 platforms:** The Ethereum link (`did:ens`) provides ecosystem reach while `did:sns` provides the privacy and permanence that Ethereum lacks. Stablecoin transfers carry verifiable compliance data that satisfies regulators without exposing the user's full on-chain history.
 
 **The Bridge:** Bidirectional `alsoKnownAs` linking means a credential issued by a Costa Rican bank via `did:web:crbank.cr` can be presented to an Ethereum DeFi protocol via `did:ens:alice.eth`, verified against the primary `did:sns` anchor — all without re-issuing the credential or duplicating identity data. Legacy banking meets modern finance in a single verifiable presentation.
+
+**Standards alignment & upstream contributions:** This architecture is not built in isolation. We actively contribute to the W3C and upstream DID method specifications to ensure cross-chain interoperability is standardized — 8 PRs to [did:ens](https://github.com/veramolabs/did-ens-spec/pulls?q=author%3Achongkan), 5 PRs to [did:pkh](https://github.com/w3c-ccg/did-pkh/pulls?q=author%3Achongkan), all tracked at [W3C did-extensions #680](https://github.com/w3c/did-extensions/issues/680).
 
 ## Privacy by Design — 7 Layers
 
