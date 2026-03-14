@@ -4,26 +4,35 @@
 
 ## The Problem
 
-Regulated institutions — fintechs, banks, stablecoin issuers — face an impossible trade-off: Ethereum (ENS) is the gold standard for ecosystem reach, but it's a privacy nightmare (fully transparent transaction history) and identities can "expire" if leases aren't renewed. Solana offers speed and low cost, but identity standards are fragmented. Meanwhile, compliance teams need KYC/KYB proof, users need privacy, and every chain maintains its own identity silo.
+Identity in financial services is broken in three directions at once:
 
-The result: duplicated onboarding costs per chain, PII scattered across counterparties, stale compliance data, and no portable identity between partners.
+**Traditional banks** run KYC/KYB on proprietary systems that don't talk to each other. A customer verified by Bank A must re-verify from scratch at Bank B. Compliance data is siloed, onboarding is slow, and PII is duplicated across every counterparty — multiplying breach surface with every new relationship.
+
+**Fintechs and neobanks** live between worlds. They need to interoperate with legacy payment rails (SWIFT, SINPE, Fedwire) while serving users who expect instant, digital-first experiences. Their identity systems are modern but isolated — they can't share compliance state with traditional banks or across blockchain ecosystems.
+
+**Web3-native platforms** — stablecoin issuers, DeFi protocols, DAOs — have the opposite problem. Ethereum (ENS) is the gold standard for ecosystem reach, but it's a privacy nightmare (fully transparent transaction history) and identities can "expire" if leases aren't renewed. Every chain maintains its own identity silo, and there's no bridge to the regulated world.
+
+The result across all three: duplicated onboarding costs, PII scattered across counterparties, stale compliance data, no portable identity between partners, and no way to bridge legacy finance into modern infrastructure without rebuilding identity from scratch.
 
 ## The Solution: Dual-DID Architecture
 
-`did:sns` introduces a **Dual-DID architecture** where a permanent, privacy-preserving Solana identity serves as the **primary credential anchor**, while linked identities on Ethereum and other chains extend the holder's reach — without duplicating credentials or sacrificing privacy.
+`did:sns` introduces a **Dual-DID architecture** that bridges traditional banking, fintech, and Web3 under a single portable identity. A permanent, privacy-preserving Solana identity serves as the **primary credential anchor**, while linked identities on Ethereum, traditional web domains, and legacy systems extend the holder's reach — without duplicating credentials or sacrificing privacy.
 
 ```
-did:sns:alice.attestto.sol          ← Primary anchor (credentials, vault, consent)
+did:sns:alice.crbank.sol            ← Primary anchor (credentials, vault, consent)
   ├── alsoKnownAs: did:ens:alice.eth        ← Ethereum ecosystem reach
   ├── alsoKnownAs: did:pkh:solana:CKg5...   ← Universal key-proof layer
-  └── alsoKnownAs: did:web:alice.com         ← Traditional web binding
+  ├── alsoKnownAs: did:web:crbank.cr         ← Bank's traditional web domain
+  └── service: ISO 20022 party data          ← SWIFT/Fedwire/SINPE compatibility
 ```
 
-**Primary DID (Solana):** Holds the credentials, 2-of-N Shamir key splitting, and post-quantum security. Permanent (rent-exempt).
+**For traditional banks:** The `did:web` link binds to the bank's existing domain. Credential schemas map to ISO 20022 party identification structures (`pacs.008`/`pacs.009`) — the same format that SWIFT, Fedwire, TARGET2, and SINPE already use. A bank doesn't need to "go Web3" — they issue W3C credentials through their existing compliance process, and those credentials slot directly into cross-border payment messages their systems already understand.
 
-**Linked DID (Ethereum):** Acts as the public face for ecosystem reach.
+**For fintechs:** The identity works across both worlds. A fintech can verify a credential issued by a traditional bank (via `did:web`) or by a Web3 platform (via `did:ens`), using the same verification flow. One integration, both ecosystems.
 
-**The Bridge:** Bidirectional `alsoKnownAs` linking allows an Ethereum user to present a Solana-backed credential without ever leaving the ETH ecosystem.
+**For Web3 platforms:** The Ethereum link (`did:ens`) provides ecosystem reach while `did:sns` provides the privacy and permanence that Ethereum lacks. Stablecoin transfers carry verifiable compliance data that satisfies regulators without exposing the user's full on-chain history.
+
+**The Bridge:** Bidirectional `alsoKnownAs` linking means a credential issued by a Costa Rican bank via `did:web:crbank.cr` can be presented to an Ethereum DeFi protocol via `did:ens:alice.eth`, verified against the primary `did:sns` anchor — all without re-issuing the credential or duplicating identity data. Legacy banking meets modern finance in a single verifiable presentation.
 
 ## Privacy by Design — 7 Layers
 
@@ -43,7 +52,19 @@ The DID Document contains **zero personal data**. Every layer of the architectur
 
 7. **Post-quantum forward secrecy.** Hybrid migration path: ML-DSA-44 (FIPS 204) alongside Ed25519, and ML-KEM-768 alongside X25519.
 
-## Value Proposition for Fintechs - Increased Compliance, Reduced Liabilities
+## Value Proposition for Traditional Banks
+
+- **No blockchain expertise required.** A bank issues W3C Verifiable Credentials through its existing KYC/KYB process. The credential is anchored to `did:web:crbank.cr` (the bank's own domain) and linked to `did:sns` for portability. The bank never touches a blockchain directly — their compliance officers work with the same data formats they already know.
+
+- **ISO 20022 native.** Credential schemas map directly to ISO 20022 party identification structures. When a cross-border payment requires originator/beneficiary data, the credential fields slot into `pacs.008` and `pacs.009` messages without translation. SWIFT, Fedwire, TARGET2, SINPE — the compliance data arrives in the format these rails already expect.
+
+- **Eliminate redundant onboarding.** A customer verified by your bank can present that credential to a partner institution — another bank, a fintech, an insurance provider. The partner verifies the credential cryptographically without re-running KYC. Your verification is portable, and your customer doesn't fill out the same forms twice.
+
+- **vLEI bridge for institutional identity.** Banks and corporates with LEI numbers get automatic enrichment via the GLEIF vLEI bridge. The DID Document includes the LEI, entity name, jurisdiction, and a link to the GLEIF registry — instant KYB for any counterparty.
+
+- **Future-proof without migration.** The spec defines a hybrid post-quantum migration path. Credentials issued today with Ed25519 remain verifiable when ML-DSA-44 becomes mandatory — no mass re-issuance, no customer disruption.
+
+## Value Proposition for Fintechs — Increased Compliance, Reduced Liabilities
 
 - **One credential, every chain.** Issue a KYC credential once to `did:sns`. The user presents it on Ethereum, Solana, or any chain with a linked DID — no re-verification, no duplicate onboarding, no per-chain compliance cost.
 
@@ -69,19 +90,21 @@ The DID Document contains **zero personal data**. Every layer of the architectur
 
 ## The Numbers That Matter
 
-| Today (per-chain KYC) | With Dual-DID |
+| Today | With Dual-DID |
 |---|---|
 | $5-15 per user per chain for KYC | One verification, every chain |
 | 3-7 days re-onboarding per partner | Instant credential presentation |
 | Full PII stored per counterparty | Zero PII held — selective disclosure only |
 | Manual sanctions re-screening | Real-time revocation propagation |
 | Chain-specific identity silos | One portable identity, chain-agnostic |
+| Separate Web2 and Web3 identity stacks | Single identity bridging legacy rails and blockchain |
+| ISO 20022 data manually assembled per transfer | Credential fields map natively to `pacs.008`/`pacs.009` |
 
 ## The Bottom Line
 
-**Identity becomes infrastructure, not overhead.** Issue once, verify everywhere, revoke instantly, and never hold PII you don't need to.
+**Identity becomes infrastructure, not overhead.** Whether you're a traditional bank issuing KYC credentials, a fintech bridging ecosystems, or a stablecoin issuer satisfying the Travel Rule — issue once, verify everywhere, revoke instantly, and never hold PII you don't need to.
 
-The specification meets the requirements of GDPR, Costa Rica Law 8968, FATF Travel Rule, and ISO 20022 simultaneously — proving that regulatory compliance and user privacy are not in conflict.
+The specification meets the requirements of GDPR, Costa Rica Law 8968, FATF Travel Rule, and ISO 20022 simultaneously — bridging legacy finance and modern Web3 infrastructure while proving that regulatory compliance and user privacy are not in conflict.
 
 ## Learn More
 
