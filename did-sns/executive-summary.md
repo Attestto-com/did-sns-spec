@@ -51,6 +51,8 @@ The DID Document contains **zero personal data**. Every layer of the architectur
 
 - **Portable compliance across partners.** A user onboarded by Bank A can present the same credential to Fintech B. The credential is anchored to a permanent Solana DID — it survives the user switching banks, wallets, or chains.
 
+- **No tracking between participants.** Pairwise subdomain DIDs ensure that Bank A and Fintech B cannot correlate that they are dealing with the same user. Each counterparty receives a unique DID derived from `SHA-256(verifierDID + holderSecret)` — there is no shared identifier to cross-reference. The user controls who knows what, and no party can build a profile by comparing notes with another.
+
 ## Value Proposition for Stablecoin Issuers
 
 - **Travel Rule without the privacy leak.** FATF requires originator/beneficiary data on transfers above the threshold. With SD-JWT, you disclose exactly the required fields to the counterparty — not your user's entire identity profile.
@@ -60,6 +62,8 @@ The DID Document contains **zero personal data**. Every layer of the architectur
 - **Revocation in real time.** If a user's compliance status changes (sanctions hit, KYC expires, EDD required), the credential is revoked via W3C Bitstring Status List. Every verifier checking that credential — on any chain — sees the revocation instantly. No stale KYC.
 
 - **Audit trail without custodial liability.** The credential proves what your compliance team attested to and when. But the user's PII sits in their own encrypted vault (2-of-N Shamir) — you never hold the raw data after verification. Reduces your data breach surface to zero.
+
+- **No cross-party correlation.** The originator's bank and the beneficiary's bank each receive a pairwise DID — they cannot combine records to track the user's full transaction history across institutions. Compliance data flows where it must, but surveillance trails do not form between participants.
 
 - **ISO 20022 alignment.** The `did:sns` identity model maps directly to ISO 20022 party identification structures — the same standard that SWIFT, Fedwire, TARGET2, and BCCR's SINPE use for cross-border payments. A `did:sns` DID resolves to structured party data (legal name, LEI, jurisdiction) that slots into `pacs.008` and `pacs.009` messages without translation layers. Stablecoin transfers carrying a `did:sns` identity can bridge into traditional payment rails with compliance data already in the format banks expect.
 
