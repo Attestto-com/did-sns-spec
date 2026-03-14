@@ -36,6 +36,48 @@ Most blockchain-based DID methods expose the holder to correlation, surveillance
 
 For the full privacy architecture, see [Section 5 — Privacy Architecture](https://github.com/Attestto-com/did-sns-spec/blob/main/did-sns/spec/05-privacy.md).
 
+## Cross-Chain Interoperability
+
+`did:sns` is not an island. The specification defines a **dual-DID architecture** where `did:sns` serves as the primary credential anchor while linked identities on other chains extend the holder's reach across ecosystems — without duplicating credentials or sacrificing the privacy guarantees above.
+
+**How it works:**
+
+The W3C `alsoKnownAs` property creates bidirectional links between a `did:sns` identity and identities on other chains. Both DID Documents must reference each other — a unilateral claim is rejected. This prevents identity hijacking if a linked name (e.g., an ENS domain) expires and is re-registered by someone else.
+
+```
+did:sns:alice.attestto.sol          ← Primary anchor (credentials, vault, consent)
+  ├── alsoKnownAs: did:ens:alice.eth        ← Ethereum ecosystem reach
+  ├── alsoKnownAs: did:pkh:solana:CKg5...   ← Universal key-proof layer
+  └── alsoKnownAs: did:web:alice.com         ← Traditional web binding
+```
+
+**Supported cross-chain DID methods:**
+
+| Linked Method | Chain | Link Mechanism | What It Adds |
+|---|---|---|---|
+| [`did:ens`](https://github.com/veramolabs/did-ens-spec) | Ethereum | ENS TEXT record `org.w3c.did.alsoKnownAs` | Ethereum ecosystem identity, Safe multi-sig control, ENS subdomain pairwise DIDs |
+| [`did:pkh`](https://github.com/w3c-ccg/did-pkh) | Any (generative) | Companion registry or verifier hints | Universal blockchain address → DID wrapper, same Ed25519 key backing |
+| `did:web` | DNS | `.well-known/did-configuration.json` | Traditional web domain binding |
+| `did:sol` | Solana | `equivalentId` (same key material) | Direct Solana account-anchored equivalence |
+
+**Cross-chain verification flow:**
+
+1. Resolve `did:sns` (primary) → extract `alsoKnownAs` entries
+2. Resolve each linked DID → confirm it references the `did:sns` back (bidirectional check)
+3. For lease-based methods (ENS): check name expiry — expired links are flagged, grace-period links are degraded
+4. Verify the credential's SD-JWT signature against the **issuing DID's key** (`did:sns`), not the linked identity's key
+5. The linked identity proves ecosystem membership; the `did:sns` identity proves the credential
+
+**Design principles:**
+
+- **Credentials never leave `did:sns`.** A credential issued to `did:sns:alice.attestto.sol` is presented via the linked identity but verified against the primary anchor. If the linked identity is compromised, the credential remains valid — only the cross-chain link is severed.
+- **Pairwise isolation crosses chains.** When presenting via `did:ens`, a pairwise ENS subdomain (`<hash>.alice.eth`) is generated per verifier — the same anti-correlation guarantee as native `did:sns` pairwise subdomains.
+- **No chain dependency for security.** Vault encryption, consent gating, and revocation all anchor to Solana via `did:sns`. Linked chains provide reach, not trust.
+
+We actively contribute upstream to align cross-chain specs with this architecture — see PRs to [did:ens](https://github.com/veramolabs/did-ens-spec/pulls?q=author%3Achongkan) and [did:pkh](https://github.com/w3c-ccg/did-pkh/pulls?q=author%3Achongkan), tracked at [w3c/did-extensions#680](https://github.com/w3c/did-extensions/issues/680).
+
+For the full interoperability specification, see [Section 13 — Interoperability](https://github.com/Attestto-com/did-sns-spec/blob/main/did-sns/spec/13-interoperability.md).
+
 ## Specification
 
 The spec is organized in 14 sections — human-readable context first, standards coverage in the middle, deep technical detail at the bottom.
