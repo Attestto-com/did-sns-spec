@@ -12,6 +12,8 @@ did:sns:attestto.sol              # Platform root domain
 did:sns:devnet:alice.attestto.sol # Devnet network qualifier
 ```
 
+**New to did:sns?** Read the [Executive Summary](did-sns/executive-summary.md) — why fintechs and stablecoin issuers need cross-chain portable identity, and how the Dual-DID architecture solves it.
+
 ## Privacy by Design
 
 Most blockchain-based DID methods expose the holder to correlation, surveillance, and data leakage — the DID itself becomes a tracking handle. `did:sns` takes the opposite approach: **the DID Document contains zero personal data**, and every layer of the architecture is engineered to minimize what a verifier, an on-chain observer, or even the platform itself can learn about the holder.
