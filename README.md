@@ -53,6 +53,28 @@ did:sns:alice.attestto.sol          ← Primary anchor (credentials, vault, cons
   └── alsoKnownAs: did:web:alice.com         ← Traditional web binding
 ```
 
+**Compliance & privacy — the two pillars of cross-border identity:**
+
+Cross-chain interoperability without compliance is a toy. Cross-border compliance without privacy is a surveillance tool. `did:sns` treats both as non-negotiable pillars for financial and identity use cases — every credential schema, every presentation flow, and every cross-chain link is designed to satisfy regulators while protecting the holder.
+
+| Pillar | Standards | How did:sns Implements It |
+|---|---|---|
+| **Financial Compliance** | FATF Travel Rule, ISO 20022, EU AMLD6, CR Law 8204 | Credential schemas map to ISO 20022 party structures (`pacs.008`/`pacs.009`). Travel Rule fields disclosed via SD-JWT — only what the counterparty needs, nothing more |
+| **Data Privacy** | GDPR Art. 17, Costa Rica Law 8968, eIDAS | Zero PII on-chain. 2-of-N Shamir vault. Crypto-shredding for right to erasure. Pairwise DIDs prevent cross-verifier correlation |
+| **Identity Standards** | W3C DID v1.1, W3C VC 2.0, GLEIF vLEI | 21/22 W3C requirements covered. vLEI bridge for institutional KYB. Bitstring Status List for real-time revocation |
+| **Payment Rail Compatibility** | SWIFT, Fedwire, TARGET2, SINPE | Credential fields bridge directly into traditional payment messages without translation layers |
+
+**Financial Credential Schemas** — JSON-LD contexts for W3C Verifiable Credentials in financial compliance workflows, designed for use with `did:sns` identities and SD-JWT selective disclosure:
+
+| Schema | Context URL | Regulatory Alignment |
+|---|---|---|
+| Identity Verification (KYC) | [`/credentials/v1/identity-verification.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/identity-verification.jsonld) | FATF R.10, EU AMLD6 Art. 13, CR Law 8204 Art. 15, ISO 20022 |
+| Source of Funds (SoF) | [`/credentials/v1/source-of-funds.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/source-of-funds.jsonld) | FATF R.10, EU AMLD6 Art. 13, CR Law 8204 Art. 16, ISO 20022 |
+| Proof of Address (PoA) | [`/credentials/v1/proof-of-address.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/proof-of-address.jsonld) | FATF R.10, EU AMLD6 Art. 13(1)(a), CR SUGEF 12-21, ISO 20022 |
+| EDD Clearance | [`/credentials/v1/edd-clearance.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/edd-clearance.jsonld) | FATF R.19, EU AMLD6 Art. 18, CR Law 8204 Art. 17, ISO 20022 |
+
+Each schema includes a selective disclosure companion type — verifiers can confirm a user meets a financial threshold or holds a valid EDD clearance without seeing the underlying documents or exact amounts.
+
 **Supported cross-chain DID methods:**
 
 | Linked Method | Chain | Link Mechanism | What It Adds |
@@ -125,19 +147,6 @@ The spec is organized in 14 sections — human-readable context first, standards
 | Implementations | 1 ([`@attestto/did-sns-resolver`](https://github.com/Attestto-com/did-sns-resolver)) |
 | Test Coverage | 186 tests, 0 failures |
 | Verifiable Data Registry | Solana (SPL Name Service + SAS) |
-
-## Financial Credential Schemas
-
-JSON-LD contexts for W3C Verifiable Credentials in financial compliance workflows, designed for use with `did:sns` identities and SD-JWT selective disclosure. Schema fields map to ISO 20022 party identification structures (`pacs.008`, `pacs.009`) — credentials can bridge directly into SWIFT, Fedwire, TARGET2, and SINPE payment rails without translation layers.
-
-| Schema | Context URL | Regulatory Alignment |
-|---|---|---|
-| Identity Verification (KYC) | [`/credentials/v1/identity-verification.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/identity-verification.jsonld) | FATF R.10, EU AMLD6 Art. 13, CR Law 8204 Art. 15, ISO 20022 |
-| Source of Funds (SoF) | [`/credentials/v1/source-of-funds.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/source-of-funds.jsonld) | FATF R.10, EU AMLD6 Art. 13, CR Law 8204 Art. 16, ISO 20022 |
-| Proof of Address (PoA) | [`/credentials/v1/proof-of-address.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/proof-of-address.jsonld) | FATF R.10, EU AMLD6 Art. 13(1)(a), CR SUGEF 12-21, ISO 20022 |
-| EDD Clearance | [`/credentials/v1/edd-clearance.jsonld`](https://spec.attestto.com/did-sns/credentials/v1/edd-clearance.jsonld) | FATF R.19, EU AMLD6 Art. 18, CR Law 8204 Art. 17, ISO 20022 |
-
-Each schema includes a selective disclosure companion type — verifiers can confirm a user meets a financial threshold or holds a valid EDD clearance without seeing the underlying documents or exact amounts.
 
 ## W3C Requirements Coverage
 
