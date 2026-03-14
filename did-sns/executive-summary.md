@@ -43,7 +43,7 @@ The DID Document contains **zero personal data**. Every layer of the architectur
 
 7. **Post-quantum forward secrecy.** Hybrid migration path: ML-DSA-44 (FIPS 204) alongside Ed25519, and ML-KEM-768 alongside X25519.
 
-## Value Proposition for Fintechs
+## Value Proposition for Fintechs - Increased Compliance, Reduced Liabilities
 
 - **One credential, every chain.** Issue a KYC credential once to `did:sns`. The user presents it on Ethereum, Solana, or any chain with a linked DID — no re-verification, no duplicate onboarding, no per-chain compliance cost.
 
