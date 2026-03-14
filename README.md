@@ -2,6 +2,9 @@
 
 **Alias-anchored W3C Decentralized Identifiers for cross-border interoperability, privacy, and compliance**
 
+**New to did:sns?** Read the [Executive Summary](did-sns/executive-summary.md) — why fintechs and stablecoin issuers need cross-chain portable identity, and how the Dual-DID architecture solves it.
+
+
 The `did:sns` method binds [W3C Decentralized Identifiers](https://www.w3.org/TR/did-core/) to human-readable `.sol` domain aliases — enabling institutions, fintechs, and regulated entities to issue, verify, and present identity credentials across jurisdictions and blockchains. Web3 native, Web2 transparent — end users interact with readable aliases while the specification guarantees interoperability, selective disclosure, and regulatory compliance out of the box.
 
 ```
@@ -12,7 +15,6 @@ did:sns:attestto.sol              # Platform root domain
 did:sns:devnet:alice.attestto.sol # Devnet network qualifier
 ```
 
-**New to did:sns?** Read the [Executive Summary](did-sns/executive-summary.md) — why fintechs and stablecoin issuers need cross-chain portable identity, and how the Dual-DID architecture solves it.
 
 ## Privacy by Design
 
