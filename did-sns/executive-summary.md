@@ -61,6 +61,8 @@ The DID Document contains **zero personal data**. Every layer of the architectur
 
 - **Audit trail without custodial liability.** The credential proves what your compliance team attested to and when. But the user's PII sits in their own encrypted vault (2-of-N Shamir) — you never hold the raw data after verification. Reduces your data breach surface to zero.
 
+- **ISO 20022 alignment.** The `did:sns` identity model maps directly to ISO 20022 party identification structures — the same standard that SWIFT, Fedwire, TARGET2, and BCCR's SINPE use for cross-border payments. A `did:sns` DID resolves to structured party data (legal name, LEI, jurisdiction) that slots into `pacs.008` and `pacs.009` messages without translation layers. Stablecoin transfers carrying a `did:sns` identity can bridge into traditional payment rails with compliance data already in the format banks expect.
+
 ## The Numbers That Matter
 
 | Today (per-chain KYC) | With Dual-DID |
@@ -75,7 +77,7 @@ The DID Document contains **zero personal data**. Every layer of the architectur
 
 **Identity becomes infrastructure, not overhead.** Issue once, verify everywhere, revoke instantly, and never hold PII you don't need to.
 
-The specification meets the requirements of GDPR, Costa Rica Law 8968, and FATF Travel Rule simultaneously — proving that regulatory compliance and user privacy are not in conflict.
+The specification meets the requirements of GDPR, Costa Rica Law 8968, FATF Travel Rule, and ISO 20022 simultaneously — proving that regulatory compliance and user privacy are not in conflict.
 
 ## Learn More
 
