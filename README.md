@@ -12,6 +12,30 @@ did:sns:attestto.sol              # Platform root domain
 did:sns:devnet:alice.attestto.sol # Devnet network qualifier
 ```
 
+## Privacy by Design
+
+Most blockchain-based DID methods expose the holder to correlation, surveillance, and data leakage — the DID itself becomes a tracking handle. `did:sns` takes the opposite approach: **the DID Document contains zero personal data**, and every layer of the architecture is engineered to minimize what a verifier, an on-chain observer, or even the platform itself can learn about the holder.
+
+**7 privacy layers, working together:**
+
+1. **No PII on-chain.** The Solana ledger stores only cryptographic commitments (SHA-256 hashes, public keys, attestation pointers). All personal data lives in encrypted Data Vaults protected by a 2-of-2 Shamir key split — the platform holds one share, the user holds the other. Neither party can access the data alone.
+
+2. **Selective disclosure via SD-JWT.** Credentials use per-field salted hashes (IETF SD-JWT). A holder can prove "I am over 18" or "my country is in the EU" without revealing their date of birth or exact nationality. The verifier receives only the claims they requested — nothing more.
+
+3. **Pairwise identifiers.** Each verifier relationship gets a unique subdomain DID derived from `SHA-256(verifierDID + holderSecret)`. Two verifiers cannot collude to correlate the same holder — they each see a different DID, a different service endpoint, and a different presentation.
+
+4. **Consent-gated proof access.** No credential is ever shared without explicit holder consent. The Vault Extension presents a field-by-field consent screen before assembling any Verifiable Presentation. Consent is logged, time-bounded, and revocable.
+
+5. **Dual-key encryption (Vault architecture).** A per-user Vault Master Key (VMK) is split via 2-of-2 XOR Shamir: Share A lives in the user's browser extension, Share B is wrapped by a platform KEK and stored server-side. Decryption requires both shares to combine — the platform alone cannot decrypt, and a stolen device alone cannot decrypt.
+
+6. **Crypto-shredding for right to erasure.** Deleting Share B renders all vault objects permanently inaccessible — the AES-256-GCM keys that protect individual objects can never be reconstructed. This satisfies GDPR Article 17 and Costa Rica Law 8968 without needing to locate and delete every copy of every credential.
+
+7. **Post-quantum forward secrecy.** The spec defines a hybrid migration path: ML-DSA-44 (FIPS 204) signatures alongside Ed25519, and ML-KEM-768 key encapsulation alongside X25519. Today's credentials remain verifiable after quantum computers arrive — and today's encrypted vault data remains confidential.
+
+**The result:** A holder's `did:sns` identity is publicly resolvable (verifiers can discover service endpoints and public keys), but the holder retains full control over *what* is disclosed, *to whom*, and *for how long*. The specification meets the privacy requirements of GDPR, Costa Rica Law 8968, and FATF Travel Rule simultaneously — proving that regulatory compliance and user privacy are not in conflict.
+
+For the full privacy architecture, see [Section 5 — Privacy Architecture](https://github.com/Attestto-com/did-sns-spec/blob/main/did-sns/spec/05-privacy.md).
+
 ## Specification
 
 The spec is organized in 14 sections — human-readable context first, standards coverage in the middle, deep technical detail at the bottom.
