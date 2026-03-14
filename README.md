@@ -18,7 +18,7 @@ Most blockchain-based DID methods expose the holder to correlation, surveillance
 
 **7 privacy layers, working together:**
 
-1. **No PII on-chain.** The Solana ledger stores only cryptographic commitments (SHA-256 hashes, public keys, attestation pointers). All personal data lives in encrypted Data Vaults protected by a 2-of-2 Shamir key split — the platform holds one share, the user holds the other. Neither party can access the data alone.
+1. **No PII on-chain.** The Solana ledger stores only cryptographic commitments (SHA-256 hashes, public keys, attestation pointers). All personal data lives in encrypted Data Vaults protected by a 2-of-N Shamir key split — decryption requires a threshold of shares to combine. Neither the platform alone nor a single device can access the data.
 
 2. **Selective disclosure via SD-JWT.** Credentials use per-field salted hashes (IETF SD-JWT). A holder can prove "I am over 18" or "my country is in the EU" without revealing their date of birth or exact nationality. The verifier receives only the claims they requested — nothing more.
 
@@ -26,7 +26,7 @@ Most blockchain-based DID methods expose the holder to correlation, surveillance
 
 4. **Consent-gated proof access.** No credential is ever shared without explicit holder consent. The Vault Extension presents a field-by-field consent screen before assembling any Verifiable Presentation. Consent is logged, time-bounded, and revocable.
 
-5. **Dual-key encryption (Vault architecture).** A per-user Vault Master Key (VMK) is split via 2-of-2 XOR Shamir: Share A lives in the user's browser extension, Share B is wrapped by a platform KEK and stored server-side. Decryption requires both shares to combine — the platform alone cannot decrypt, and a stolen device alone cannot decrypt.
+5. **Dual-key encryption (Vault architecture).** A per-user Vault Master Key (VMK) is split via 2-of-N Shamir secret sharing: shares are distributed across the user's devices, the platform, and optional guardians. Reconstruction requires a minimum threshold of shares — the platform alone cannot decrypt, a stolen device alone cannot decrypt, and social recovery is possible without a single point of failure.
 
 6. **Crypto-shredding for right to erasure.** Deleting Share B renders all vault objects permanently inaccessible — the AES-256-GCM keys that protect individual objects can never be reconstructed. This satisfies GDPR Article 17 and Costa Rica Law 8968 without needing to locate and delete every copy of every credential.
 
