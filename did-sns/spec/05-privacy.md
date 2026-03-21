@@ -23,6 +23,46 @@ SNS aliases are public and resolvable. This creates correlation risk — if a us
 3. **ZKP cross-DID proofs** — prove "all these DIDs belong to the same person" without revealing which DIDs, via ZKP on national ID or biometric hash
 4. **Fresh subdomains** — for maximum unlinkability, users can request a new subdomain per relationship
 
+## 5.4 Cross-Chain Privacy Model
+
+`did:sns` uses `.sol` as the **privacy anchor**. Binding other chain accounts (Ethereum, Bitcoin, etc.) to a `did:sns` identity is **strictly opt-in** — nothing about a user's cross-chain wallets is exposed unless they explicitly create a SAS attestation.
+
+### Default State: Privacy by Inaction
+
+A user who holds an Ethereum wallet and a `did:sns` identity has no cross-chain linkage unless they take explicit action. Resolvers who query `did:sns:alice.attestto` learn nothing about `0x...` addresses the user may hold. This is the opposite of raw CAIP-10 (`did:pkh`) where the wallet address *is* the identity — public and permanently linkable.
+
+### Opt-In Binding: SAS Attestation
+
+When a user chooses to link another chain:
+
+1. User signs a SAS attestation on Solana proving ownership of the target chain account (CAIP-10 format)
+2. Platform writes the attestation on-chain
+3. `did_document_service` emits the CAIP-10 address in `alsoKnownAs` on the next DID Document resolution
+4. Verifiers who receive the DID Document can now confirm cross-chain ownership
+
+The user can **revoke the SAS attestation at any time** — the CAIP-10 entry disappears from the next DID Document resolution. This is not possible with address-based DID methods.
+
+### Resolution Privacy: Always Through `did:sns`
+
+Cross-chain resolution MUST go **through** `did:sns`, not around it. The resolver chain is:
+
+```
+Cross-chain verifier
+  → discovers CAIP-10 address in did:sns alsoKnownAs (opt-in only)
+    → resolves did:sns identity
+      → privacy controls, SD-JWT selective disclosure, consent-gated access apply
+```
+
+A verifier who has only a raw Ethereum address and attempts to skip DID resolution loses all privacy protections — they see only what is on-chain on Ethereum, with no access to the holder's selective disclosure controls, credential status lists, or consent gate. This creates a clear incentive for verifiers to prefer `did:sns` resolution over raw chain lookups.
+
+### Privacy Comparison
+
+| Approach | Cross-chain exposure | Revocable? | Privacy controls |
+|---|---|---|---|
+| Raw CAIP-10 / `did:pkh` | Always public (address is the ID) | ❌ No | ❌ None |
+| `did:sns` unlinked | No cross-chain data exposed | N/A | ✅ Full |
+| `did:sns` + SAS binding | User-chosen chains only | ✅ Yes | ✅ Full |
+
 ## 5.3 Regulatory Compliance Mapping
 
 | Regulation | Jurisdiction | How `did:sns` Complies |
