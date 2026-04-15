@@ -1,8 +1,10 @@
 # did:sns
 
-> Human-readable aliases as permanent decentralized identifiers — key rotation without identity loss, transaction history detachment, and cross-border interoperability.
+> A resolution layer that maps human-readable aliases to W3C DID Documents — enabling key rotation without identity loss, public key detachment from the identity, and cross-border interoperability.
 
-The `did:sns` method binds W3C Decentralized Identifiers to human-readable [Solana Name Service](https://sns.id) (SNS) domains. The core design separates three things that traditional systems conflate:
+`did:sns` is a **resolution layer**. You put in a human-readable alias (`alice.crbank.sol`), you get back a DID Document containing the current public keys, service endpoints, and trust chain metadata. That's what the method does. Everything else — credentials, compliance, vaults, selective disclosure — is built on top of this resolution layer by platforms and issuers.
+
+The `did:sns` method binds W3C Decentralized Identifiers to [Solana Name Service](https://sns.id) (SNS) domains. The core design separates three things that traditional systems conflate:
 
 1. **Alias ≠ key** — `alice.crbank.sol` is the identity. The cryptographic key can rotate without changing the identity. A compromised key doesn't mean a lost identity.
 2. **Identity ≠ public key** — Platforms operating managed wallets keep the public key behind their infrastructure. Users share only the alias. Counterparties verify through the alias, never seeing the underlying key or its on-chain transaction history.
