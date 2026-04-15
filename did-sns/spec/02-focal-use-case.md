@@ -16,6 +16,91 @@ Each DID is **independent** — signed with whatever keys the issuing institutio
 
 Tenant subdomains provide **branding, UX, and trust mapping** — easy to share, easy to remember, and resolvable by any other institution following the same spec. Users share the aliases they choose, and ecosystem accounts can transact, send, receive, and resolve to external domains — even cross-chain domains. Tier 1/2 users may not be aware of the on-chain layer at all.
 
+## Use Case: Stablecoin Payments via Human-Readable Aliases
+
+A user holds stablecoin accounts across multiple institutions. Instead of sharing unfriendly blockchain addresses, IBANs, or routing/account numbers, the user shares human-readable aliases:
+
+```
+Traditional:
+  "Send $500 to CR05015201001027777777"              (IBAN — 22 chars, error-prone)
+  "Send $500 to 7Xf3kP9qR2vN8mT4..."                (Solana address — 44 chars, unreadable)
+  "Send $500 to routing 021000021, account 123456789" (US — two numbers, easily confused)
+
+With did:sns:
+  "Send $500 to bob.bank1.sol"                        (human-readable, per-institution)
+```
+
+Bob holds separate aliases per institution:
+
+- `bob.bank1.sol` → Bank 1 stablecoin wallet (regulated, KYC'd)
+- `bob.bank2.sol` → Bank 2 stablecoin wallet (different jurisdiction)
+- `bob.personal.sol` → Personal self-custodial wallet
+
+Each alias resolves to a different wallet address. The wallet address is never shared directly — it lives behind the alias, managed by the institution. Bob shares the alias he chooses per context, and the counterparty resolves it at transaction time to get the current receiving address.
+
+### Compliance Layer (separate from did:sns, attached via hooks)
+
+`did:sns` defines the identity layer. Payment compliance operates on top of it — the spec does not embed compliance logic, but defines where it attaches:
+
+**Pre-transaction compliance flow:**
+
+```
+1. Sender initiates: "Send $500 USDC to bob.bank1.sol"
+
+2. Sender's platform resolves did:sns:bob.bank1 →
+   - Gets DID Document
+   - Checks service endpoint: "TravelRuleService" → URL for FATF Travel Rule data exchange
+   - Checks SAS attestation: jurisdiction, regulatory status, LEI of receiving institution
+
+3. AML / sanctions screening (sender's platform):
+   - Resolve the receiving wallet address from the DID Document
+   - Check against Circle's USDC blacklist (frozen addresses)
+   - Check against OFAC SDN list, EU sanctions list, local AML watchlists
+   - Check the receiving institution's LEI status via GLEIF API
+   - If any check fails → transaction blocked, compliance alert raised
+
+4. Travel Rule exchange (if threshold exceeded):
+   - Sender's platform sends originator info to receiver's TravelRuleService endpoint
+   - Receiver's platform validates and acknowledges
+   - Both platforms retain records per jurisdictional requirements
+
+5. Transaction executes:
+   - Stablecoin transfer to the wallet address resolved from bob.bank1.sol
+   - The wallet address is ephemeral — Bob's institution can rotate it
+   - Bob's alias remains permanent regardless of wallet changes
+```
+
+**What did:sns provides for this flow:**
+
+| Component | Source | Purpose |
+|---|---|---|
+| Human-readable destination | `bob.bank1.sol` (alias) | UX — no addresses shared |
+| Receiving wallet address | DID Document → verificationMethod or service endpoint | Transaction routing |
+| Receiving institution identity | SAS attestation → LEI hash | Institutional verification |
+| Travel Rule endpoint | DID Document → service: `TravelRuleService` | Compliance data exchange |
+| ISO 20022 party mapping | DID Document → service: `ISO20022PartyId` | Financial messaging interop |
+| Sanctions screening input | Resolved wallet address | Check against Circle blacklist, OFAC, EU lists |
+
+**What did:sns does NOT embed (separate compliance layer):**
+
+- FATF Travel Rule logic (jurisdiction-specific, evolves independently)
+- AML/KYC verification procedures (institution-specific)
+- Sanctions list maintenance (OFAC, EU, national lists)
+- Circle USDC blacklist checking (Circle's API, changes in real-time)
+- ISO 20022 message formatting (financial messaging standard, maintained by SWIFT/ISO)
+- Transaction monitoring and suspicious activity reporting
+
+This separation ensures the DID spec doesn't need to change when compliance rules change. The compliance layer reads from the identity layer and attaches its own logic.
+
+### Why This Matters
+
+The combination of human-readable aliases + compliance hooks means:
+
+1. **Users** share `bob.bank1.sol` instead of wallet addresses or IBANs — simpler, memorable, works across borders
+2. **Platforms** resolve the alias to get everything they need for compliance — wallet address, institution identity, Travel Rule endpoint, LEI — from a single DID resolution
+3. **Regulators** get the audit trail they require — the DID is permanent, the SAS attestations are on-chain, the Travel Rule exchange is logged by both platforms
+4. **Bad actors** are caught at step 3 — sanctions screening happens BEFORE the transaction, using the wallet address resolved from the alias, against real-time blacklists
+
 ## Trust Model
 
 Trust is established by the **root domain holder having a DID in its root**, issued by a recognized authority. The authority may be a platform operator, a standards body (`identity.sol`, `w3c.sol`), or any entity with proper governance (e.g., multisig wallet holding the root domain). Root domain holders can delegate management to a platform that enforces the spec, or implement it independently.
