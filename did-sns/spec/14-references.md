@@ -27,6 +27,6 @@
 
 ---
 
-(c) 2026 [Attestto](https://attestto.com) | [open@attestto.com](mailto:open@attestto.com)
+(c) 2026 [Attestto](https://attestto.org) | [open@attestto.com](mailto:open@attestto.com)
 
 Published under the [W3C Software and Document License](https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document).

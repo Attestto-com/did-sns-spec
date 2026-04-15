@@ -155,14 +155,12 @@ The same bank-issued subdomain, but the user has opted into full Web3 features. 
     }
   ],
   "alsoKnownAs": [
-    "https://search.gleif.org/#/record/9845008661B99CC9FD07",
-    "caip10:solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    "caip10:eip155:1:0xAbcDef1234567890AbcDef1234567890AbcDef12"
+    "https://search.gleif.org/#/record/9845008661B99CC9FD07"
   ]
 }
 ```
 
-**Note:** Tier 3 adds `#solana-key` (Ed25519), `#eth-key` (secp256k1), `keyAgreement` for DIDComm, and `capabilityInvocation`/`capabilityDelegation` for on-chain governance (DAO voting, multisig treasury). The country certificate and platform passkey remain available — the user chooses which method to use per transaction. `alsoKnownAs` binds external identifiers (LEI records, `did:web`, CAIP-10 chain addresses) to the DID. **CAIP-10 entries are opt-in only** — they appear only when the user has created a corresponding SAS attestation proving ownership of that cross-chain account. A user who has not opted in to cross-chain binding has no CAIP-10 entries, and their other wallets remain private. See [§5.4 Cross-Chain Privacy Model](05-privacy.md#54-cross-chain-privacy-model).
+**Note:** Tier 3 adds `#solana-key` (Ed25519), `#eth-key` (secp256k1), `keyAgreement` for DIDComm, and `capabilityInvocation`/`capabilityDelegation` for on-chain governance (DAO voting, multisig treasury). The country certificate and platform passkey remain available — the user chooses which method to use per transaction. `alsoKnownAs` may bind external identifiers such as LEI records or `did:web` domains to the DID. **Cross-chain wallet addresses (CAIP-10) are deliberately excluded** from `alsoKnownAs` — exposing wallet addresses in the DID Document would break the privacy layer by enabling full transaction history tracing. See [§5.3](05-privacy.md#53-cross-chain-wallet-linking-deliberately-excluded).
 
 ## 8.2c Example — Tier 3 Platform User (Direct, Full Web3)
 
@@ -240,13 +238,10 @@ A platform-issued subdomain for a power user with full self-sovereign control. S
       "accept": ["didcomm/v2"]
     }
   ],
-  "alsoKnownAs": [
-    "caip10:solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-  ]
 }
 ```
 
-**Note:** Platform users at Tier 3 have the same Web3 capabilities as tenant users but under the platform's root domain. No country-specific certificate is shown here — the platform user authenticates via passkey biometric + self-custodial wallets. Country certificates can be added if the user's jurisdiction supports them. `alsoKnownAs` CAIP-10 entries are opt-in — present only when the user has bound additional chain accounts via SAS attestation.
+**Note:** Platform users at Tier 3 have the same Web3 capabilities as tenant users but under the platform's root domain. No country-specific certificate is shown here — the platform user authenticates via passkey biometric + self-custodial wallets. Country certificates can be added if the user's jurisdiction supports them. Cross-chain wallet addresses are not included in `alsoKnownAs` — see [§5.3](05-privacy.md#53-cross-chain-wallet-linking-deliberately-excluded).
 
 ## 8.3 Example — Tenant Root Domain (Self-Sovereign)
 
@@ -353,16 +348,15 @@ The DID (`did:sns:alice.platform`) is anchored to the **SNS name**, not the wall
 2. The old key signs a `setClass` transaction transferring the SNS subdomain to the new key
 3. Solana NameRegistry is updated — new owner key in bytes 32–63 of the record header
 4. `did:sns` resolver reads the updated NameRegistry → `#solana-key` now reflects the new public key
-5. Any CAIP-10 `alsoKnownAs` entries referencing the old address are automatically stale — the user creates a new SAS attestation binding the new wallet, and revokes the old one
+5. SAS attestations referencing the old key are revoked and reissued with the new key
 
 **What survives rotation:**
 
 | Item | Survives? | Notes |
 |---|---|---|
 | DID identifier (`did:sns:alice.platform`) | ✅ Yes | Name is unchanged |
-| Verifiable credentials issued to this DID | ✅ Yes | Credentials reference the DID, not the address |
-| SAS attestations | ⚠️ Revoke + reissue | Old address binding is no longer valid |
-| CAIP-10 `alsoKnownAs` entries | ⚠️ Update | Reflects new wallet after SAS reissue |
+| Verifiable credentials issued to this DID | ✅ Yes | Credentials reference the DID, not the key |
+| SAS attestations | ⚠️ Revoke + reissue | Old key binding is no longer valid |
 | DIDComm channel (key agreement) | ⚠️ Update peers | Key agreement key rotates with the wallet |
 
 **Comparison:**

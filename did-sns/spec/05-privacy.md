@@ -32,45 +32,36 @@ Privacy in `did:sns` is a layered architecture where each layer addresses a diff
 2. **ZKP predicates (BBS+)** — requires BBS+ signature implementation in the issuance and presentation stack
 3. **Consent-gated vault access** — requires platform-operated encrypted vault infrastructure with 2-of-2 key split
 4. **SAS attestations** — require the Solana Attestation Service program and authorized issuers
-5. **Cross-chain binding** — requires SAS attestation infrastructure for opt-in CAIP-10 linking
-
 ## 5.2 Correlation Risk & Mitigations
 
 SNS aliases are public and resolvable. This creates correlation risk — if a user shares `alice.crbank.sol` with multiple parties, those parties can correlate interactions. Mitigations:
 
 1. **Multiple aliases** — users hold independent DIDs across issuers; share different aliases in different contexts
 2. **Pseudonymous aliases** — platform subdomains can be pseudonymous (`a7f3.platform.sol`), user's choice
-3. **ZKP cross-DID proofs** — prove "all these DIDs belong to the same person" without revealing which DIDs, via ZKP on national ID or biometric hash
-4. **Fresh subdomains** — for maximum unlinkability, users can request a new subdomain per relationship
+3. **Fresh subdomains** — for maximum unlinkability, users can request a new subdomain per relationship
 
-## 5.4 Cross-Chain Privacy Model
-
-`did:sns` uses `.sol` as the **privacy anchor**. Binding other chain accounts (Ethereum, Bitcoin, etc.) to a `did:sns` identity is **strictly opt-in** — nothing about a user's cross-chain wallets is exposed unless they explicitly create a SAS attestation.
-
-### Default State: Privacy by Inaction
-
-A user who holds an Ethereum wallet and a `did:sns` identity has no cross-chain linkage unless they take explicit action. Resolvers who query `did:sns:alice.attestto` learn nothing about `0x...` addresses the user may hold.
-
-> [!NOTE]
-> **Contrast with `did:pkh` (CAIP-10):** In `did:pkh`, the wallet address *is* the identity — public and permanently linkable. Every transaction under that address is part of the identity's history, forever. `did:sns` inverts this: the alias is the identity, the wallet is hidden behind it, and cross-chain binding is opt-in and revocable.
+## 5.3 Cross-Chain Wallet Linking: Deliberately Excluded
 
 > [!CAUTION]
-> **Cross-chain wallet linking is outside the scope of `did:sns`.** Exposing wallet addresses from other chains (e.g., via `alsoKnownAs` CAIP-10 entries) would break the privacy layer — any resolver could see the wallet address and trace its full transaction history. Cross-chain interoperability for payments and transfers should be handled by dedicated services (e.g., Circle CCTP, bridge protocols) that operate at the transaction layer, not the identity layer. `did:sns` resolves aliases to DID Documents — it does not link or expose wallet addresses across chains.
+> **`did:sns` does not link or expose wallet addresses across chains.** Exposing wallet addresses from other chains (e.g., via `alsoKnownAs` CAIP-10 entries) in the DID Document would break the core privacy property — any resolver could see the wallet address and trace its full transaction history. This is the exact problem `did:sns` is designed to prevent.
+>
+> Cross-chain interoperability for payments and transfers is handled by dedicated services at the transaction layer (e.g., Circle CCTP, bridge protocols), not at the identity layer. `did:sns` resolves aliases to DID Documents — it is a resolution layer, not a wallet linking service.
 
-## 5.3 Regulatory Compliance Mapping
+> [!NOTE]
+> **Contrast with `did:pkh` (CAIP-10):** In `did:pkh`, the wallet address *is* the identity — public and permanently linkable. Every transaction under that address is part of the identity's history, forever. `did:sns` inverts this: the alias is the identity, the wallet is hidden behind it by the platform.
 
-| Regulation | Jurisdiction | How `did:sns` Complies |
+## 5.4 Regulatory Compliance
+
+> [!IMPORTANT]
+> **Regulatory compliance is a separate layer built on top of `did:sns`, not embedded in the method.** The method's contribution to compliance is: no PII on-chain, pseudonymous aliases, and service endpoints where compliance data can attach. The compliance logic itself (FATF Travel Rule, AML screening, ISO 20022 mapping) is implemented by platforms and issuers using the hooks defined in [§2 Use Cases](02-focal-use-case.md).
+
+| Regulation | did:sns contribution (method level) | Platform/issuer responsibility |
 |---|---|---|
-| **GDPR** (Art. 17 — Right to erasure) | EU | Delete vault content + deactivate DID. On-chain pointers become meaningless without encrypted payload. Dual-key encryption = pseudonymized data beyond any single custodian's control |
-| **Law 8968** (Protección de Datos Personales) | Costa Rica | Same as GDPR — 2-of-2 XOR key-split ensures data is pseudonymized. Platform alone cannot access user data |
-| **LGPD** | Brazil | Same erasure model; consent-gated access aligns with consent requirements |
-| **CCPA** | California, US | Right to delete satisfied by vault content deletion; right to know satisfied by user's access to their own vault |
-| **FATF Travel Rule** | Global | Originator/beneficiary data embedded in DID attestation layer; transmitted with transaction, not stored publicly |
-| **PCI DSS** | Global | No payment card data in DID layer; stablecoin settlement bypasses card networks entirely |
-
-> *This table will expand as the ecosystem grows. Implementers in new jurisdictions should contribute their local compliance mapping. See the [discussion section](https://github.com/Attestto-com/did-sns-spec/discussions) for jurisdiction-specific proposals.*
-
-> *As with all alias-anchored DID methods, these privacy guarantees apply equally to `did:ens` or any method following this specification.*
+| **GDPR** (Art. 17) | No PII on-chain; DID deactivation makes pointers meaningless | Vault content deletion, consent management, crypto-shredding |
+| **Law 8968** (Costa Rica) | Same as GDPR — no PII on-chain | Platform manages data access, ARCO rights |
+| **FATF Travel Rule** | Service endpoint `TravelRuleService` for data exchange | Originator/beneficiary data exchange between platforms |
+| **ISO 20022** | Service endpoint `ISO20022PartyId` for party mapping | Financial message formatting and routing |
+| **AML / Sanctions** | Alias resolves to platform address (not user wallet) | Sender screening before accepting funds (Circle blacklist, OFAC, etc.) |
 
 ---
 

@@ -14,23 +14,8 @@
 | **Key Types** | Ed25519 (RFC 8032), secp256k1 (ECIES), ML-DSA-44 / ML-KEM-768 (FIPS 203/204) | Standard key types — no proprietary cryptography. Post-quantum hybrid mode defined for the transition period. See [§12.1](12-security.md#121-post-quantum-cryptography-migration). |
 | **JSON-LD Context** | [W3C JSON-LD 1.1](https://www.w3.org/TR/json-ld11/) | Published at `spec.attestto.com/v1/sns.jsonld`. Any JSON-LD processor can expand `did:sns` documents without platform-specific tooling. |
 | **DNS Discovery** | DNS TXT records | `_did.alice.com TXT "did=did:sns:alice.crbank"` — Web2 domains can alias to `did:sns` identifiers. Verifiers resolve via standard DNS before hitting Solana. |
-| **CAIP-10 / CASA** | [CAIP-10](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md) (Chain Agnostic Improvement Proposals) | Cross-chain wallet accounts bound to `did:sns` via SAS attestations. When a user opts in, their Ethereum, Bitcoin, or other chain accounts appear in `alsoKnownAs` as `caip10:<namespace>:<reference>:<address>`. Resolvers who hold only a raw chain address can discover the linked `did:sns` via the SAS registry — but only if the user created a binding. Binding is revocable at any time. `did:sns` supersedes `did:pkh` (deprecated, no production usage) for this use case: it provides key rotation, full DID Documents, human-readable identifiers, privacy controls, and SAS-based revocation. |
-
-## Cross-Chain Resolution Model
-
-Cross-chain resolution in `did:sns` flows **through** the did:sns identity, not around it. This design preserves all privacy controls regardless of which chain a verifier starts from.
-
-```
-Verifier holds: caip10:eip155:1:0xAlice...
-  → queries SAS registry: is there a did:sns bound to this address?
-    → finds: did:sns:alice.attestto (user opted in)
-      → resolves DID Document
-        → privacy controls, selective disclosure, consent gate all apply
-```
-
-If the user has not created a SAS binding, the SAS registry returns nothing. The verifier has a wallet address and nothing more — the user's `did:sns` identity remains private.
-
-**Why this matters:** A raw CAIP-10 address lookup on Ethereum reveals the user's full transaction history. Routing through `did:sns` gives the user full control over what they disclose. Verifiers who prefer `did:sns` resolution get richer identity data (credentials, status lists, DIDComm endpoint) than chain-scraping ever could. This creates a natural incentive for the ecosystem to adopt `did:sns`-first resolution.
+> [!CAUTION]
+> **Cross-chain wallet linking (CAIP-10) is deliberately excluded from `did:sns`.** Exposing wallet addresses from other chains in the DID Document would break the core privacy property — any resolver could trace the wallet's full transaction history. Cross-chain payment interoperability is handled by dedicated services at the transaction layer (e.g., Circle CCTP, bridge protocols). See [§5.3](05-privacy.md#53-cross-chain-wallet-linking-deliberately-excluded).
 
 ## Universal Resolver: Convenience, Not Infrastructure
 

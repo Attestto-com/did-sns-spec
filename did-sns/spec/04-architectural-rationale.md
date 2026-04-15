@@ -9,7 +9,7 @@ Traditional financial identifiers — IBANs, SWIFT codes, routing numbers, walle
 | `CR05015201001027777777` (IBAN) | `alice.crbank.sol` | Shareable, memorable, resolvable |
 | `BNCRCRSJ` (SWIFT) | `crbank.sol` | Institution identity, not just a routing code |
 | `7nYB...3kPo` (Solana wallet) | `alice.platform.sol` | Human name, not a hash |
-| `0x1a2b...9f8e` (Ethereum wallet) | `alice.chongkan.sol` | Works cross-chain |
+| `0x1a2b...9f8e` (Ethereum wallet) | `alice.chongkan.sol` | Human name, not a hash |
 
 Any Web3 wallet that supports SNS resolution can send assets (stablecoins, tokens) directly to the domain's configured wallet address — no need to copy-paste public keys. The alias resolves to the wallet; the user shares a name, not a key.
 
@@ -28,7 +28,8 @@ The global financial messaging infrastructure is migrating to ISO 20022 (SWIFT M
 | `RgltryRptg` | SAS attestation chain provides FATF Travel Rule data |
 | `PmtId/EndToEndId` | Transaction reference resolvable via DID service endpoint |
 
-This means a `did:sns`-based transfer can generate ISO 20022-compliant messages automatically — the identity and compliance data is already structured in the DID layer. Financial institutions don't need to maintain separate compliance messaging pipelines; the alias resolution provides the regulatory data alongside the payment routing.
+> [!IMPORTANT]
+> **ISO 20022 mapping is a compliance layer built on top of `did:sns`, not embedded in the method.** The DID Document and SAS attestations provide the structured identity data. Mapping that data to ISO 20022 message fields is the responsibility of the platform or financial institution — the method provides the hooks (service endpoints, attestation fields), not the compliance logic itself.
 
 > *This applies to any alias-anchored DID method following this spec (`did:ens`, etc.). The ISO 20022 mapping is method-agnostic — it depends on the attestation schema, not the underlying blockchain.*
 
@@ -42,12 +43,7 @@ This means a `did:sns`-based transfer can generate ISO 20022-compliant messages 
 | BIS Nexus (multi-currency) | Real-time (where available) | Varies by corridor | Same alias, same resolution — local and cross-border identical |
 | Wire transfer | Same day–2 days | $25–$50 | Replaced by alias resolution + stablecoin settlement |
 
-> **What this enables:** Alias-anchored identity with ISO 20022 compliance opens payment corridors that previously required bilateral agreements, correspondent banking chains, and weeks of integration work. Financial providers can onboard into:
-> - **Digital ID & Signature** — issue and verify identity credentials using the same infrastructure that routes payments
-> - **Stablecoin settlement** — offer stablecoin transfers as a service to their end users without building crypto infrastructure from scratch
-> - **DeFi-as-a-Service** — provide regulated access to DeFi liquidity, yield, and cross-border settlement under their own compliance umbrella
->
-> End users get faster transfers, lower fees, and portable identity — without needing to understand the underlying infrastructure. Financial providers get reduced onboarding costs, automated compliance, and access to new corridors and revenue streams. The alias is the bridge between traditional finance and Web3 — invisible to the user, transformative for the provider.
+> **What this enables:** Alias-anchored identity with compliance hooks opens payment corridors that previously required bilateral agreements and correspondent banking chains. Platforms and financial institutions build the compliance and settlement layers on top of `did:sns` resolution — the method provides the identity infrastructure, not the financial services themselves.
 
 ## 4.2 Trust Hierarchy Inspired by SSL Certificate Authorities
 
