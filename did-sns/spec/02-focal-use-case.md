@@ -98,6 +98,28 @@ Each alias resolves to a different wallet address. The wallet address is never s
 
 This separation ensures the DID spec doesn't need to change when compliance rules change. The compliance layer reads from the identity layer and attaches its own logic.
 
+### An Alternative to Traditional Payment Rails
+
+When used as recommended — alias-to-platform resolution, sender screening before acceptance, Travel Rule via service endpoints, institutional LEI verification — this flow provides a **compliant alternative to traditional correspondent banking and SWIFT messaging** for stablecoin-denominated cross-border payments:
+
+| | SWIFT / Correspondent Banking | did:sns + Stablecoins (as recommended) |
+|---|---|---|
+| **Destination identifier** | IBAN + BIC/SWIFT code | `bob.bank1.sol` (human-readable alias) |
+| **Routing** | Correspondent chain (2-5 intermediaries) | Direct: sender platform → receiver platform (1 hop) |
+| **Settlement** | T+1 to T+3 (days) | Near-instant (Solana finality ~400ms) |
+| **Cost** | $15–$50+ per transfer (intermediary fees) | Stablecoin transfer fee (<$0.01) + platform fees |
+| **Sender screening** | Each intermediary screens independently (redundant) | Sender screened once BEFORE funds leave — platform wallet stays clean |
+| **Travel Rule** | SWIFT MT103/MT202 fields | Service endpoint exchange (same data, modern transport) |
+| **Institutional identity** | BIC code (opaque, no cryptographic verification) | LEI + SAS attestation (cryptographically verifiable via GLEIF API) |
+| **Recipient wallet exposure** | Account number shared with all intermediaries | Never exposed — alias resolves to platform, internal routing only |
+| **Currency** | Fiat (exchange rate risk on each hop) | USDC/stablecoin (stable, no conversion between intermediaries) |
+| **Audit trail** | Fragmented across intermediaries | On-chain (immutable) + Travel Rule logs (both platforms) |
+| **Hours of operation** | Banking hours, cut-off times, weekends | 24/7/365 |
+| **ISO 20022 compatibility** | Native (migrating from MT to MX) | Mapped via service endpoint — DID Document carries ISO 20022 party identification |
+
+> [!NOTE]
+> **This is not a theoretical comparison.** Stablecoin rails (Circle USDC, EURC) already process billions in cross-border value. What they lack is a standardized identity layer that satisfies compliance requirements without exposing user wallet addresses. `did:sns` provides that layer — human-readable aliases, institutional verification, Travel Rule hooks, and sender screening — while keeping the user's actual wallet private and the platform's wallet clean.
+
 ### Why This Matters
 
 The combination of human-readable aliases + compliance hooks means:
