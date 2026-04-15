@@ -54,37 +54,8 @@ A user who holds an Ethereum wallet and a `did:sns` identity has no cross-chain 
 > [!NOTE]
 > **Contrast with `did:pkh` (CAIP-10):** In `did:pkh`, the wallet address *is* the identity — public and permanently linkable. Every transaction under that address is part of the identity's history, forever. `did:sns` inverts this: the alias is the identity, the wallet is hidden behind it, and cross-chain binding is opt-in and revocable.
 
-### Opt-In Binding: SAS Attestation
-
-When a user chooses to link another chain:
-
-1. User signs a SAS attestation on Solana proving ownership of the target chain account (CAIP-10 format)
-2. Platform writes the attestation on-chain
-3. `did_document_service` emits the CAIP-10 address in `alsoKnownAs` on the next DID Document resolution
-4. Verifiers who receive the DID Document can now confirm cross-chain ownership
-
-The user can **revoke the SAS attestation at any time** — the CAIP-10 entry disappears from the next DID Document resolution. This is not possible with address-based DID methods.
-
-### Resolution Privacy: Always Through `did:sns`
-
-Cross-chain resolution MUST go **through** `did:sns`, not around it. The resolver chain is:
-
-```
-Cross-chain verifier
-  → discovers CAIP-10 address in did:sns alsoKnownAs (opt-in only)
-    → resolves did:sns identity
-      → privacy controls, SD-JWT selective disclosure, consent-gated access apply
-```
-
-A verifier who has only a raw Ethereum address and attempts to skip DID resolution loses all privacy protections — they see only what is on-chain on Ethereum, with no access to the holder's selective disclosure controls, credential status lists, or consent gate. This creates a clear incentive for verifiers to prefer `did:sns` resolution over raw chain lookups.
-
-### Privacy Comparison
-
-| Approach | Cross-chain exposure | Revocable? | Privacy controls |
-|---|---|---|---|
-| Raw CAIP-10 / `did:pkh` | Always public (address is the ID) | ❌ No | ❌ None |
-| `did:sns` unlinked | No cross-chain data exposed | N/A | ✅ Full |
-| `did:sns` + SAS binding | User-chosen chains only | ✅ Yes | ✅ Full |
+> [!CAUTION]
+> **Cross-chain wallet linking is outside the scope of `did:sns`.** Exposing wallet addresses from other chains (e.g., via `alsoKnownAs` CAIP-10 entries) would break the privacy layer — any resolver could see the wallet address and trace its full transaction history. Cross-chain interoperability for payments and transfers should be handled by dedicated services (e.g., Circle CCTP, bridge protocols) that operate at the transaction layer, not the identity layer. `did:sns` resolves aliases to DID Documents — it does not link or expose wallet addresses across chains.
 
 ## 5.3 Regulatory Compliance Mapping
 

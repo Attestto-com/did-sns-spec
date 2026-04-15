@@ -57,7 +57,8 @@ did:sns:devnet:alice.crbank.sol   ← Devnet network qualifier
 
 **Operator-Agnostic:** Any SNS domain owner — a bank, a fintech, a standards body, or an individual — can anchor DIDs under their namespace. The specification does not require any specific platform.
 
-**Cross-Chain Interoperability:** The `alsoKnownAs` property creates bidirectional links to Ethereum (ENS), web domains (did:web), and other chains (did:pkh). Both DID Documents must reference each other — a unilateral claim is rejected, preventing identity hijacking if a linked name expires.
+> [!NOTE]
+> **Why did:sns does not integrate CAIP-10 / cross-chain wallet linking.** Exposing wallet addresses from other chains in the DID Document (e.g., via `alsoKnownAs` CAIP-10 entries) would break the core privacy property: anyone resolving the alias could see the wallet address and trace its full transaction history — the exact problem `did:sns` is designed to prevent. Cross-chain payment interoperability is handled by dedicated services at the transaction layer (e.g., Circle CCTP, bridge protocols), not at the identity layer. `did:sns` resolves aliases to DID Documents. It does not link or expose wallet addresses across chains.
 
 ---
 
@@ -176,16 +177,13 @@ This separation ensures the DID spec doesn't need to change when compliance rule
 
 ---
 
-## Cross-Chain Methods
+## Related DID Methods
 
-| Linked Method | Chain | Link Mechanism |
-|---|---|---|
-| [`did:ens`](https://github.com/veramolabs/did-ens-spec) | Ethereum | ENS TEXT record `alsoKnownAs` |
-| [`did:pkh`](https://github.com/w3c-ccg/did-pkh) | Any | Companion registry |
-| `did:web` | DNS | `.well-known/did-configuration.json` |
-| `did:sol` | Solana | `equivalentId` (same key material) |
-
-Bidirectional links required — unilateral claims rejected.
+| Method | Relationship |
+|---|---|
+| [`did:pki`](https://github.com/Attestto-com/did-pki-spec) | Sibling spec — bridges national PKI hierarchies to DID ecosystem |
+| `did:web` | Complementary — traditional web domain binding via `.well-known/did-configuration.json` |
+| `did:key` | Complementary — ephemeral/self-issued DIDs for one-time interactions |
 
 ---
 
