@@ -112,7 +112,7 @@ When used as recommended — alias-to-platform resolution, sender screening befo
 | **Travel Rule** | SWIFT MT103/MT202 fields | Service endpoint exchange (same data, modern transport) |
 | **Institutional identity** | BIC code (opaque, no cryptographic verification) | LEI + SAS attestation (cryptographically verifiable via GLEIF API) |
 | **Recipient wallet exposure** | Account number shared with all intermediaries | Never exposed — alias resolves to platform, internal routing only |
-| **Currency** | Fiat (exchange rate risk on each hop) | USDC/stablecoin (stable, no conversion between intermediaries) |
+| **Currency conversion** | FX conversion at each intermediary hop (spread + fees compound) | Single conversion at entry/exit; stablecoin travels the rail without intermediate FX |
 | **Audit trail** | Fragmented across intermediaries | On-chain (immutable) + Travel Rule logs (both platforms) |
 | **Hours of operation** | Banking hours, cut-off times, weekends | 24/7/365 |
 | **ISO 20022 compatibility** | Native (migrating from MT to MX) | Mapped via service endpoint — DID Document carries ISO 20022 party identification |
