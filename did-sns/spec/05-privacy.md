@@ -49,7 +49,10 @@ SNS aliases are public and resolvable. This creates correlation risk — if a us
 
 ### Default State: Privacy by Inaction
 
-A user who holds an Ethereum wallet and a `did:sns` identity has no cross-chain linkage unless they take explicit action. Resolvers who query `did:sns:alice.attestto` learn nothing about `0x...` addresses the user may hold. This is the opposite of raw CAIP-10 (`did:pkh`) where the wallet address *is* the identity — public and permanently linkable.
+A user who holds an Ethereum wallet and a `did:sns` identity has no cross-chain linkage unless they take explicit action. Resolvers who query `did:sns:alice.attestto` learn nothing about `0x...` addresses the user may hold.
+
+> [!NOTE]
+> **Contrast with `did:pkh` (CAIP-10):** In `did:pkh`, the wallet address *is* the identity — public and permanently linkable. Every transaction under that address is part of the identity's history, forever. `did:sns` inverts this: the alias is the identity, the wallet is hidden behind it, and cross-chain binding is opt-in and revocable.
 
 ### Opt-In Binding: SAS Attestation
 
