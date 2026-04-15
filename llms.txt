@@ -1,0 +1,126 @@
+# did:sns — DID Method Specification
+
+> Alias-anchored W3C Decentralized Identifiers for cross-border interoperability, privacy, and compliance. Binds W3C DIDs to human-readable `.sol` Solana Name Service domains.
+
+Published at [spec.attestto.com](https://spec.attestto.com). Developed by [Attestto Open](https://attestto.org).
+
+## What did:sns is
+
+`did:sns` is a W3C DID method that uses Solana Name Service (SNS) `.sol` domains as the primary identifier. It introduces a **Dual-DID architecture** — the `did:sns` identity serves as a permanent, privacy-preserving credential anchor while `alsoKnownAs` links extend reach to Ethereum (ENS), web domains, and legacy systems, without duplicating credentials.
+
+```
+did:sns:alice.crbank.sol         ← client subdomain (tenant-issued)
+did:sns:crbank.sol               ← institutional root DID
+did:sns:alice.attestto.sol       ← platform-issued subdomain
+did:sns:attestto.sol             ← platform root DID
+did:sns:devnet:alice.attestto.sol ← explicit network qualifier
+```
+
+## The problem it solves
+
+Traditional banks, fintechs, and Web3 platforms each maintain identity silos. A customer verified by Bank A re-verifies from scratch at Bank B. Compliance data can't cross chains or institutions. Ethereum identities (ENS) are transparent (full on-chain history) and expire on non-renewal.
+
+`did:sns` solves this with:
+- A permanent Solana-anchored identity that doesn't expire
+- Bidirectional `alsoKnownAs` links bridging Web2, Ethereum, and Solana ecosystems
+- ISO 20022 party data in the DID Document for SWIFT / SINPE / Fedwire compatibility
+- GLEIF vLEI bridge for instant institutional KYB
+- Zero PII on-chain
+
+## Dual-DID architecture
+
+```
+did:sns:alice.crbank.sol
+  ├── alsoKnownAs: did:ens:alice.eth        ← Ethereum ecosystem
+  ├── alsoKnownAs: did:pkh:solana:CKg5...   ← Universal key-proof layer
+  ├── alsoKnownAs: did:web:crbank.cr         ← Bank's web domain
+  ├── service: ISO 20022 party data          ← SWIFT/Fedwire/SINPE
+  └── service: GLEIF vLEI bridge             ← Instant institutional KYB
+```
+
+Both DID Documents must reference each other (`alsoKnownAs` is bidirectional). A unilateral claim is rejected — this prevents identity hijacking if a linked name (e.g. ENS) expires and is re-registered.
+
+## Privacy architecture — 7 layers
+
+The DID Document contains **zero personal data**. Every layer is engineered to minimize what a verifier, on-chain observer, or the platform itself can learn.
+
+1. **No PII on-chain** — Solana stores only cryptographic commitments (hashes, public keys, attestation pointers). Personal data lives in encrypted Vaults with 2-of-N Shamir key splits.
+2. **SD-JWT selective disclosure** — per-field salted hashes. A holder proves "I am over 18" without revealing their date of birth.
+3. **Pairwise identifiers** — each verifier relationship gets a unique subdomain DID derived from `SHA-256(verifierDID + holderSecret)`. Two verifiers cannot correlate the same holder.
+4. **Consent-gated proof access** — no credential is shared without explicit per-field consent. Consent is time-bounded and revocable.
+5. **Dual-key Shamir vault** — VMK split across user devices, platform, and guardians. Platform alone cannot decrypt.
+6. **Crypto-shredding** — deleting the platform's key share renders vault data permanently inaccessible. Satisfies GDPR Article 17 and Costa Rica Law 8968.
+7. **Post-quantum forward secrecy** — hybrid migration path: ML-DSA-44 (FIPS 204) + Ed25519, ML-KEM-768 + X25519.
+
+## DID syntax
+
+```
+did:sns:<network-qualifier>:<sns-name>
+
+did:sns:alice.crbank.sol                 ← mainnet (implicit)
+did:sns:devnet:alice.crbank.sol          ← devnet
+did:sns:testnet:alice.crbank.sol         ← testnet
+```
+
+SNS name must be a valid `.sol` domain. Subdomains (`alice.crbank.sol`) map to tenant-issued identities. Root domains (`crbank.sol`) map to institutional identities.
+
+## CRUD operations
+
+- **Create** — Register a `.sol` SNS domain, publish DID Document to Attestto CDN (`attestto.id`), anchor hash to Solana via SAS
+- **Read** — Resolve `did:sns:alice.crbank.sol` → fetch from `attestto.id/{sns-name}/did.json` → verify SAS anchor hash
+- **Update** — Update DID Document on CDN + re-anchor new hash on-chain
+- **Deactivate** — Publish tombstone DID Document with `deactivated: true`, propagate via mesh in <500ms
+
+## Spec sections
+
+The full specification is in `did-sns/spec/`:
+
+| File | Contents |
+|---|---|
+| `01-abstract.md` | Problem statement and summary |
+| `02-focal-use-case.md` | Cross-border fintech / bank / DeFi use case |
+| `03-trust-model.md` | Trust hierarchy and chain of trust |
+| `04-architectural-rationale.md` | Why Solana + SNS, Dual-DID design decisions |
+| `05-privacy.md` | Full 7-layer privacy architecture |
+| `06-w3c-coverage.md` | W3C DID Core compliance coverage |
+| `07-did-syntax.md` | Syntax rules, network qualifiers, name constraints |
+| `08-did-document.md` | DID Document structure and required fields |
+| `09-crud-operations.md` | Create / Read / Update / Deactivate flows |
+| `10-metadata-schema.md` | DID resolution metadata |
+| `11-sas-integration.md` | Solana Attestation Service anchoring |
+| `12-security.md` | Threat model, attack vectors, mitigations |
+| `13-interoperability.md` | Cross-chain links, ISO 20022, vLEI, FATF Travel Rule |
+| `14-references.md` | Standards and citations |
+
+## Compliance alignment
+
+| Standard | Coverage |
+|---|---|
+| W3C DID Core 1.0 | Full |
+| W3C VC Data Model v2.0 | Credential anchoring and presentation |
+| SD-JWT (IETF draft) | Selective disclosure |
+| FATF Travel Rule | Originator/beneficiary identification |
+| eIDAS 2.0 | EU digital identity compliance target |
+| ISO 20022 | Party identification in payment messages |
+| GLEIF vLEI / ACDC / KERI | Institutional identity chain-of-trust |
+| GDPR Article 17 | Right to erasure via crypto-shredding |
+| Costa Rica Law 8968 | Data privacy |
+| ML-DSA-44 / ML-KEM-768 | Post-quantum migration (planned) |
+
+## Upstream contributions
+
+This spec contributes to W3C and upstream DID methods to ensure cross-chain interoperability is standardized: 8 PRs to `did:ens`, 5 PRs to `did:pkh`, tracked at [W3C did-extensions #680](https://github.com/w3c/did-extensions/issues/680).
+
+## Related repos
+
+| Repo | Purpose |
+|---|---|
+| `attestto.id` | DID document hosting — `did:web:*.attestto.id` resolves here |
+| `vLei-Solana-Bridge` | GLEIF vLEI → Solana SBT + Attestation PDA |
+| `wallet-identity-resolver` | Resolve DID + identity from a Solana wallet address |
+| `@attestto-com/vc-sdk` | Issue and verify credentials anchored to `did:sns` or `did:web` |
+| `cr-vc-schemas` | CR credential schemas using `did:web:cosevi.attestto.id` as issuer DID |
+
+## License
+
+Apache 2.0 — [Attestto Open](https://attestto.org)

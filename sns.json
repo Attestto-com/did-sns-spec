@@ -5,8 +5,8 @@
   "specification": "https://spec.attestto.com/did-sns",
   "implementationCount": 1,
   "contactName": "Attestto Identity Standards Group",
-  "contactEmail": "standards@attestto.com",
-  "contactWebsite": "https://attestto.com",
+  "contactEmail": "open@attestto.com",
+  "contactWebsite": "https://attestto.org",
   "jsonLdContext": "https://spec.attestto.com/v1/sns.jsonld",
   "implementationReport": "https://spec.attestto.com/did-sns/report"
 }

@@ -22,7 +22,7 @@ The specification is **operator-agnostic**: any SNS domain owner — a platform,
 | Verifiable Data Registry | Solana (SPL Name Service + SAS) |
 | Specification Version | v0.4.0 |
 | Last Updated | 2026-04-14 |
-| Editor | [Attestto](https://attestto.com) |
+| Editor | [Attestto](https://attestto.org) |
 | Author | Eduardo Chongkan ([@chongkan](https://github.com/chongkan)) |
 | Reference Implementation | [`@attestto/did-sns-resolver`](https://github.com/Attestto-com/did-sns-resolver) |
 
