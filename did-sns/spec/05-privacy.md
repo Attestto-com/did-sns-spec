@@ -1,18 +1,38 @@
 # 5. Privacy Architecture
 
-Privacy in `did:sns` is not a single feature — it is a layered architecture where each layer addresses a different threat model. The design principle: **the minimum possible data is exposed at each interaction, and no single party holds enough information to reconstruct a user's full identity or activity.**
+Privacy in `did:sns` is a layered architecture where each layer addresses a different threat model. The design principle: **the minimum possible data is exposed at each interaction, and no single party holds enough information to reconstruct a user's full identity or activity.**
+
+> [!IMPORTANT]
+> **Transparency on privacy scope:** Some privacy properties are inherent to the `did:sns` method itself. Others require additional infrastructure (issuer platforms, SAS attestation layer, credential issuance stack) to be effective. The table below clearly marks which layer provides each property. Implementers should understand that **the DID method alone provides pseudonymity and on-chain minimization — not full privacy**. Full selective disclosure, ZKP predicates, and consent-gated access require a credential issuance and presentation stack built on top of `did:sns`.
 
 ## 5.1 Privacy Layers
 
-| Layer | Mechanism | What It Protects |
-|---|---|---|
-| **On-chain minimization** | NameRegistry stores only keys, flags, and hashes — never names, emails, or personal data | Prevents PII exposure from public ledger |
-| **Selective disclosure** | SD-JWT ([RFC 9449](https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/)) with per-field salt and hash | User reveals only the fields required per presentation (e.g., "KYC Level 2" without date of birth) |
-| **ZKP predicates** | BBS+ signatures for unlinkable proofs | Prove properties ("age ≥ 18", "jurisdiction = EU") without revealing the underlying value |
-| **Consent-gated access** | 2-of-2 XOR key-split (VMK architecture) | Neither the platform nor the user alone can decrypt proof data; both must participate |
-| **Alias independence** | Each DID is independent; user controls which to share | Prevents cross-issuer correlation — sharing `alice.crbank.sol` reveals nothing about `alice.fintech.sol` |
-| **Transaction privacy** | Alias resolves to wallet; wallet can rotate; transaction layer is independent | Payment sender resolves alias to wallet without learning KYC status; verifier confirms identity without seeing transaction history |
-| **LEI privacy** | LEI numbers stored as SHA-256 hashes in SAS attestations | Verifiers hash a known LEI to compare; on-chain data doesn't reveal the LEI itself |
+| Layer | Mechanism | What It Protects | Provided by |
+|---|---|---|---|
+| **On-chain minimization** | NameRegistry stores only keys, flags, and hashes — never names, emails, or personal data | Prevents PII exposure from public ledger | **did:sns method (inherent)** |
+| **Alias pseudonymity** | SNS domains are public but pseudonymous — `a7f3.platform.sol` reveals nothing about the holder's real identity | Identity not exposed on-chain unless voluntarily linked | **did:sns method (inherent)** |
+| **Alias independence** | Each DID is independent; user controls which to share | Prevents cross-issuer correlation — sharing `alice.crbank.sol` reveals nothing about `alice.fintech.sol` | **did:sns method (inherent)** |
+| **Transaction privacy** | Alias resolves to wallet; wallet can rotate; transaction layer is independent | Payment sender resolves alias to wallet without learning KYC status | **did:sns method (inherent)** — but wallet rotation requires platform support |
+| **Selective disclosure** | SD-JWT ([RFC 9449](https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/)) with per-field salt and hash | User reveals only the fields required per presentation (e.g., "KYC Level 2" without date of birth) | **Credential layer (requires issuer stack)** — did:sns defines the identity; selective disclosure applies to credentials issued to that identity |
+| **ZKP predicates** | BBS+ signatures for unlinkable proofs | Prove properties ("age ≥ 18", "jurisdiction = EU") without revealing the underlying value | **Credential layer (requires issuer stack + BBS+ implementation)** — not yet implemented in reference stack |
+| **Consent-gated access** | 2-of-2 XOR key-split (VMK architecture) | Neither the platform nor the user alone can decrypt proof data; both must participate | **Platform infrastructure (requires vault implementation)** — defined in spec but requires operational infrastructure |
+| **LEI privacy** | LEI numbers stored as SHA-256 hashes in SAS attestations | Verifiers hash a known LEI to compare; on-chain data doesn't reveal the LEI itself | **SAS layer (requires attestation infrastructure)** |
+
+### What did:sns provides standalone (no additional infrastructure)
+
+1. **No PII on-chain** — the Solana ledger never contains personal data; only keys, flags, and hashes
+2. **Pseudonymous aliases** — SNS domains do not inherently reveal the holder's identity
+3. **Independent aliases** — multiple DIDs are unlinkable unless the user chooses to link them
+4. **Wallet rotation** — the DID persists across key/wallet changes, preventing historical transaction correlation to current identity
+5. **Public alias correlation risk** — SNS domains are publicly resolvable. If a user shares `alice.crbank.sol` with multiple parties, those parties CAN correlate interactions. This is a fundamental property of human-readable aliases on public ledgers.
+
+### What requires additional infrastructure
+
+1. **Selective disclosure (SD-JWT)** — requires a credential issuer that issues SD-JWT credentials to the DID holder
+2. **ZKP predicates (BBS+)** — requires BBS+ signature implementation in the issuance and presentation stack
+3. **Consent-gated vault access** — requires platform-operated encrypted vault infrastructure with 2-of-2 key split
+4. **SAS attestations** — require the Solana Attestation Service program and authorized issuers
+5. **Cross-chain binding** — requires SAS attestation infrastructure for opt-in CAIP-10 linking
 
 ## 5.2 Correlation Risk & Mitigations
 
