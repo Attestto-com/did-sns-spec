@@ -7,7 +7,7 @@
 >
 > 1. **Alias ≠ key.** The identity is `alice.crbank.sol` — a human-readable name. The cryptographic key lives in the DID Document and can be **rotated without changing the identity**. A compromised key doesn't mean a lost identity.
 >
-> 2. **Identity ≠ transaction history.** When the key rotates, the old key's on-chain transaction history stays with the old key. The alias resolves to the *current* key — past transactions under previous keys are **not linkable to the current identity** through DID resolution. The identity is permanent; the traceable keys are disposable.
+> 2. **Identity ≠ public key.** In traditional blockchain identity, the public key IS the identity — anyone who knows it can trace every transaction. `did:sns` breaks this by placing the alias in front of the key. A platform, fintech, or bank operating managed wallets can **keep the public key entirely behind its infrastructure** — the user shares only the alias (`alice.crbank.sol`), and counterparties verify through the alias, never seeing or needing the underlying key. The user's on-chain transaction history is invisible to the verifier. For self-custodial users (Tier 3), key rotation achieves the same effect — the old key's history stays with the old key; the alias resolves to the current key only.
 >
 > 3. **Alias ≠ single issuer.** A user can hold independent aliases across multiple institutions (`alice.crbank.sol`, `alice.fintech.sol`). Each is independently controlled, independently verifiable, and reveals nothing about the others. Sharing one alias with a counterparty does not expose the rest.
 
@@ -30,7 +30,7 @@ The specification is **operator-agnostic**: any SNS domain owner — a platform,
 
 - **Human-readable** — `alice.crbank.sol`, not `7Xf3kP9...` — already resolvable by Solana wallets
 - **Key rotation without identity loss** — compromise a key, rotate it, your alias and identity persist
-- **Transaction history detachment** — old keys' on-chain activity doesn't follow you after rotation; the alias resolves to the current key only
+- **Key-identity separation** — platforms keep the pub key behind infrastructure; users share only the alias; counterparties never see on-chain transaction history
 - **Permanent identity** — the alias is the anchor; keys, wallets, platforms are replaceable layers underneath
 - **Hierarchical control** — subdomains inherit controller relationships from parent domains (`alice.crbank.sol` controlled by `crbank.sol`)
 - **Web2 transparent** — end users see only readable aliases; blockchain infrastructure is invisible
