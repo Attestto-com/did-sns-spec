@@ -44,20 +44,25 @@ Each alias resolves to a different wallet address. The wallet address is never s
 
 **Pre-transaction compliance flow:**
 
+> [!IMPORTANT]
+> **The alias resolves to the platform's receiving address, never to the user's personal wallet.** Bob's actual wallet is internal to the platform — it is never exposed on-chain and never shared with the counterparty. The platform handles internal routing as a ledger operation.
+>
+> **Compliance screening checks the SENDER first** — before accepting any funds into the platform wallet. Tainted funds must be rejected before they touch the platform's infrastructure, not after.
+
 ```
 1. Sender initiates: "Send $500 USDC to bob.bank1.sol"
 
-2. Sender's platform resolves did:sns:bob.bank1 →
-   - Gets DID Document
-   - Checks service endpoint: "TravelRuleService" → URL for FATF Travel Rule data exchange
-   - Checks SAS attestation: jurisdiction, regulatory status, LEI of receiving institution
-
-3. AML / sanctions screening (sender's platform):
-   - Resolve the receiving wallet address from the DID Document
-   - Check against Circle's USDC blacklist (frozen addresses)
+2. Receiver's platform resolves the sender's identity:
+   - Check the SENDER's wallet address against Circle's USDC blacklist (frozen addresses)
    - Check against OFAC SDN list, EU sanctions list, local AML watchlists
-   - Check the receiving institution's LEI status via GLEIF API
-   - If any check fails → transaction blocked, compliance alert raised
+   - Check the sender's institution LEI status via GLEIF API (if institutional sender)
+   - If any check fails → transaction REJECTED before funds touch platform wallet
+
+3. Sender's platform resolves did:sns:bob.bank1 →
+   - Gets DID Document
+   - Receives the PLATFORM's receiving address (not Bob's personal wallet)
+   - Checks SAS attestation: jurisdiction, regulatory status, LEI of receiving institution
+   - Checks service endpoint: "TravelRuleService" → URL for compliance data exchange
 
 4. Travel Rule exchange (if threshold exceeded):
    - Sender's platform sends originator info to receiver's TravelRuleService endpoint
@@ -65,9 +70,10 @@ Each alias resolves to a different wallet address. The wallet address is never s
    - Both platforms retain records per jurisdictional requirements
 
 5. Transaction executes:
-   - Stablecoin transfer to the wallet address resolved from bob.bank1.sol
-   - The wallet address is ephemeral — Bob's institution can rotate it
-   - Bob's alias remains permanent regardless of wallet changes
+   - Stablecoin transfer from sender → platform's receiving address
+   - Platform internally credits Bob's account (ledger operation, not on-chain)
+   - Bob's personal wallet address is never exposed to the sender or the blockchain
+   - Bob's alias remains permanent regardless of internal wallet changes
 ```
 
 **What did:sns provides for this flow:**
@@ -75,11 +81,11 @@ Each alias resolves to a different wallet address. The wallet address is never s
 | Component | Source | Purpose |
 |---|---|---|
 | Human-readable destination | `bob.bank1.sol` (alias) | UX — no addresses shared |
-| Receiving wallet address | DID Document → verificationMethod or service endpoint | Transaction routing |
+| Platform receiving address | DID Document → service endpoint (never the user's personal wallet) | Transaction routing to platform |
 | Receiving institution identity | SAS attestation → LEI hash | Institutional verification |
 | Travel Rule endpoint | DID Document → service: `TravelRuleService` | Compliance data exchange |
 | ISO 20022 party mapping | DID Document → service: `ISO20022PartyId` | Financial messaging interop |
-| Sanctions screening input | Resolved wallet address | Check against Circle blacklist, OFAC, EU lists |
+| Sender screening input | Sender's wallet address (checked BEFORE accepting funds) | Check against Circle blacklist, OFAC, EU lists |
 
 **What did:sns does NOT embed (separate compliance layer):**
 
@@ -96,10 +102,10 @@ This separation ensures the DID spec doesn't need to change when compliance rule
 
 The combination of human-readable aliases + compliance hooks means:
 
-1. **Users** share `bob.bank1.sol` instead of wallet addresses or IBANs — simpler, memorable, works across borders
-2. **Platforms** resolve the alias to get everything they need for compliance — wallet address, institution identity, Travel Rule endpoint, LEI — from a single DID resolution
-3. **Regulators** get the audit trail they require — the DID is permanent, the SAS attestations are on-chain, the Travel Rule exchange is logged by both platforms
-4. **Bad actors** are caught at step 3 — sanctions screening happens BEFORE the transaction, using the wallet address resolved from the alias, against real-time blacklists
+1. **Users** share `bob.bank1.sol` instead of wallet addresses or IBANs — simpler, memorable, works across borders. Their actual wallet is never exposed.
+2. **Platforms** screen the sender's wallet BEFORE accepting funds — tainted money never touches the platform infrastructure. Then resolve the receiving alias to get institution identity, Travel Rule endpoint, and LEI from a single DID resolution.
+3. **Regulators** get the audit trail they require — the DID is permanent, the SAS attestations are on-chain, the Travel Rule exchange is logged by both platforms.
+4. **Bad actors** are caught at step 2 — the sender's wallet is checked against Circle's USDC blacklist, OFAC, and sanctions lists BEFORE any funds move. The platform wallet stays clean.
 
 ## Trust Model
 
