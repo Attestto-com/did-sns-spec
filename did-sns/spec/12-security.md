@@ -65,97 +65,19 @@ ML-DSA-44 public keys (1,312 bytes) and ML-KEM-768 keys (1,184 bytes) exceed the
 | **Phase 2** (hybrid) | NIST finalizes FIPS 204/203 + Solana runtime supports PQ signature verification | Dual classical+PQ keys. Issuers sign with both. Verifiers accept either. |
 | **Phase 3** (PQ-only) | CRQC threat is imminent or classical algorithms are deprecated by NIST | Classical keys removed. `#solana-key` and `#ecies-key` sunset. |
 
-> **Harvest-now-decrypt-later:** Encrypted VP payloads created today with ECIES are at risk of future quantum decryption. For high-sensitivity credentials (financial, medical), implementers SHOULD begin using ML-KEM-768 hybrid encryption in Phase 2, even before the full PQ transition. The dual-key architecture (2-of-2 XOR VMK split, with 2-of-3 Shamir social recovery on the user share) provides an additional defense layer.
+> **Harvest-now-decrypt-later:** Encrypted VP payloads created today with ECIES are at risk of future quantum decryption. For high-sensitivity credentials (financial, medical), implementers SHOULD begin using ML-KEM-768 hybrid encryption in Phase 2, even before the full PQ transition.
 
-## 12.2 Vault Key Architecture & Social Recovery
+## 12.2 Data Storage & Key Management
 
-Tier 3 (Self-Sovereign) credentials use a hierarchical key architecture to protect encrypted proof payloads. No single party — including any platform operator — can decrypt data alone.
-
-### Key Hierarchy
-
-```
-                     Vault Master Key (VMK)
-                     256-bit AES key
-                            |
-              +-------------+-------------+
-              |         2-of-2 XOR        |
-              |           Split           |
-              v                           v
-      +---------------+          +---------------+
-      |   Share A     |          |   Share B     |
-      |   (User)      |          |   (Platform)  |
-      |               |          |               |
-      | Stored in:    |          | Stored in:    |
-      | Vault browser |          | PII Vault     |
-      | extension     |          | (KEK-wrapped) |
-      +-------+-------+          +---------------+
-              |
-              |  2-of-3 Shamir
-              |  Social Recovery
-              |
-    +---------+---------+---------+
-    |                   |         |
-    v                   v         v
-+--------+       +---------+  +-----------+
-| Device |       | Cloud   |  | Guardian  |
-| Share  |       | Backup  |  | Share     |
-|        |       | Share   |  |           |
-| Local  |       | E2E     |  | Trusted   |
-| secure |       | encrypted| | contact   |
-| storage|       | storage |  | (offline) |
-+--------+       +---------+  +-----------+
-
-Any 2 of 3 sub-shares reconstruct Share A
-```
-
-### Encryption Flow
-
-```
-Encrypt:                                 Decrypt:
-
-1. Generate DEK (per-object)             1. User provides Share A
-   DEK = random AES-256 key                 (from extension)
-
-2. Encrypt payload                       2. Platform provides Share B
-   ciphertext = AES-256-GCM(DEK, data)     (from PII Vault, KEK-unwrap)
-
-3. Wrap DEK with VMK                     3. Reconstruct VMK
-   wrapped_dek = AES-KEYWRAP(VMK, DEK)     VMK = Share_A XOR Share_B
-
-4. Split VMK into shares                 4. Unwrap DEK
-   Share_A = random(32)                     DEK = AES-KEYUNWRAP(VMK, wrapped_dek)
-   Share_B = VMK XOR Share_A
-                                         5. Decrypt payload
-5. Store Share_A in extension               data = AES-256-GCM(DEK, ciphertext)
-   Store Share_B in PII Vault
-   (KEK-wrapped)                         Both shares required.
-                                         Neither party can decrypt alone.
-```
-
-### Social Recovery Protocol
-
-If the user loses access to their Vault extension (device loss, browser reset), Share A can be reconstructed from social recovery sub-shares using 2-of-3 Shamir Secret Sharing:
-
-| Sub-Share | Storage | Access |
-|---|---|---|
-| **Device share** | Browser extension local storage (encrypted) | Automatic — available while device is active |
-| **Cloud backup share** | End-to-end encrypted cloud storage | User authenticates to cloud provider |
-| **Guardian share** | Held by a trusted contact (offline or separate device) | Guardian provides share upon identity verification |
-
-### Recovery Scenarios
-
-| Scenario | Shares Available | Recovery |
-|---|---|---|
-| Lost phone, have laptop | Device (laptop) + Cloud | Automatic — 2 of 3 |
-| Lost all devices | Cloud + Guardian | Guardian-assisted — 2 of 3 |
-| Lost device + no cloud | Guardian + new device enrollment | Guardian-assisted — requires re-enrollment |
-| Lost all 3 sub-shares | None | Unrecoverable — crypto-shredding equivalent |
-
-### Crypto-Shredding
-
-Deleting Share B from the PII Vault renders all encrypted objects permanently inaccessible, regardless of Share A availability. This satisfies GDPR and other data protection regulations' right to erasure without requiring on-chain data deletion — the on-chain pointers become meaningless without the decryption keys.
-
-> **WARNING — IRREVERSIBLE:** Crypto-shredding (deleting Share B) is a permanent, unrecoverable operation. All vault objects encrypted under that VMK become permanently inaccessible. Similarly, losing all 3 social recovery sub-shares for Share A is equivalent to crypto-shredding — there is no backdoor, no master key, and no platform override. This is by design.
+> [!IMPORTANT]
+> **Vault architecture, key splitting, and social recovery are platform-level concerns, not part of the `did:sns` method specification.** The method defines what goes on-chain (160-byte metadata buffer with hashes and pointers — never PII). How platforms store, encrypt, and recover personal data off-chain is an implementation decision for each operator.
+>
+> The `did:sns` method's security contribution is:
+> - **No PII on-chain** — only cryptographic commitments (hashes, public keys, attestation pointers)
+> - **Deactivation** — transfer to zero address makes the DID irrecoverable
+> - **Key rotation** — domain transfer updates the owner key without changing the DID
+>
+> Platforms implementing `did:sns` SHOULD implement encrypted storage with key splitting and social recovery for credential payloads, but the specific architecture (vault design, key hierarchy, recovery protocol) is outside this specification's scope.
 
 > **Threat model:** An attacker who compromises only the platform obtains Share B (KEK-wrapped) but cannot decrypt without Share A. An attacker who compromises only the user's device obtains Share A but cannot decrypt without Share B. Compromising both requires breaching the platform *and* the user's device simultaneously.
 

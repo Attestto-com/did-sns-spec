@@ -95,7 +95,7 @@ Root domain holders that wish to be recognized as trusted issuers MUST include e
 | Credential Type | Grade | What It Certifies |
 |---|---|---|
 | **Spec & Protocol Compliance** | A / B / C | Technical implementation correctness + philosophical adherence to spec principles (open interoperability, user sovereignty, no vendor lock-in) |
-| **Data Handling & Privacy** | A / B / C | PII vault architecture, encryption standards, data retention policies, compliance to global standards (GDPR, etc.) and local standards per jurisdiction |
+| **Data Handling & Privacy** | A / B / C | Off-chain data storage practices, encryption standards, data retention policies, compliance to global standards (GDPR, etc.) and local standards per jurisdiction. Implementation details (vault architecture, key splitting) are platform-specific. |
 | **Key Management & Governance** | A / B / C | Key custody model (HSM, multi-sig, recovery), governance structure (multisig, board, DAO), incident response, key rotation policies |
 | **Interoperability Certification** | Pass / Fail | Cross-institution resolution, credential exchange, and verification tested against other compliant operators |
 | **Regulatory License** | Per jurisdiction | Licensed to operate (banking, MSB, EMI, etc.) — jurisdiction-specific |
@@ -113,7 +113,7 @@ The audit is not just technical — it ensures philosophical adherence to the sp
 
 1. **Technical** — correct spec implementation, resolution works, metadata schema valid
 2. **Philosophical** — adherence to spec principles: user sovereignty, interoperability-first, no vendor lock-in, open standard participation
-3. **Data handling** — PII vault implementation, encryption at rest and in transit, 2-of-2 key split or equivalent, data retention and deletion policies
+3. **Data handling** — off-chain data storage practices, encryption at rest and in transit, data retention and deletion policies (specific architecture is platform's choice)
 4. **Local compliance** — jurisdiction-specific requirements (GDPR in EU, Law 8968 in Costa Rica, LGPD in Brazil, CCPA in California, etc.)
 5. **Key governance** — who holds the keys, what happens when keys are compromised, rotation schedule, recovery model
 6. **Availability & reliability** — uptime commitments, resolver availability, service degradation handling
@@ -143,7 +143,7 @@ Each verifier evaluates the Issuer DID's credentials against its own acceptance 
 |---|---|---|---|---|
 | **A** | Full — SD-JWT selective disclosure | Full | Independent | Self-operated or delegated |
 | **B** | Limited — ZKP only, no raw claims | Full | Independent with monitoring | Self-operated with audit trail |
-| **C** | **ZKP only** — zero access to raw user data | Full | **Must operate through a spec-compliant platform** | Managed model required — the platform handles PII vault, key management, and credential flows on behalf of the issuer |
+| **C** | **ZKP only** — zero access to raw user data | Full | **Must operate through a spec-compliant platform** | Managed model required — the platform handles off-chain data storage, key management, and credential flows on behalf of the issuer |
 
 ### Why Grade C Requires a Managed Model
 
@@ -155,7 +155,7 @@ An issuer that cannot demonstrate adequate data handling (storing sensitive data
 
 This creates a path for every institution to participate — even those with legacy systems or poor data practices — while **guaranteeing user data protection is never compromised** by the weakest link in the chain.
 
-> **Example:** A bank with Grade C data handling can still issue `alice.bank.sol` and attest KYC — but the actual KYC data, PII vault, and credential signing are handled by the platform. The bank's systems receive only ZKP confirmations ("user is KYC'd") and can operate their banking services. User data never enters the bank's non-compliant pipeline.
+> **Example:** A bank with Grade C data handling can still issue `alice.bank.sol` and attest KYC — but the actual KYC data, off-chain storage, and credential signing are handled by the platform. The bank's systems receive only ZKP confirmations ("user is KYC'd") and can operate their banking services. User data never enters the bank's non-compliant pipeline.
 
 > **Credential schemas** for ecosystem trust credentials are defined in the [Credential Schemas](../credentials/) section. Audits may be performed by the spec maintainer, accredited community participants, or recognized audit bodies. The [Community Charter](../charter/) defines the accreditation process.
 
