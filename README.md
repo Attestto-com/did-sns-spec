@@ -7,7 +7,7 @@
 The `did:sns` method binds W3C Decentralized Identifiers to [Solana Name Service](https://sns.id) (SNS) domains. The core design separates three things that traditional systems conflate:
 
 1. **Alias ≠ key** — `alice.crbank.sol` is the identity. The cryptographic key can rotate without changing the identity. A compromised key doesn't mean a lost identity.
-2. **Identity ≠ public key** — Platforms operating managed wallets keep the public key behind their infrastructure. Users share only the alias. Counterparties verify through the alias, never seeing the underlying key or its on-chain transaction history.
+2. **Identity ≠ public key** — The spec recommends that platforms operating managed wallets keep the public key behind their infrastructure. Users share only the alias. Counterparties verify through the alias, never seeing the underlying key or its on-chain transaction history. This is a recommended architecture pattern, not enforced by the method itself — self-custodial users (Tier 3) may choose to expose their keys directly.
 3. **Alias ≠ single issuer** — A user holds independent aliases across institutions (`alice.crbank.sol`, `alice.fintech.sol`). Each is independently verifiable and reveals nothing about the others.
 
 These work today — SNS domains are already resolved by Phantom, Solflare, and other Solana wallets. `did:sns` formalizes this into the W3C ecosystem so any DID-aware system can resolve the alias and verify credentials.
