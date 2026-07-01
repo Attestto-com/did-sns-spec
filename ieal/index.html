@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IEAL v0.1 — Identity Evidence Assurance Level</title>
+  <meta name="description" content="Identity Evidence Assurance Level (IEAL). A compositional model for classifying identity evidence across three axes: Capture, Algorithm, Storage. Working Draft v0.1. Aligned with NIST SP 800-63-4.">
+  <link rel="canonical" href="https://spec.attestto.com/ieal/">
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    h4 { font-size: 1rem; margin-top: 1.25rem; margin-bottom: 0.4rem; color: var(--muted); }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: var(--code-bg);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+      font-size: 0.85em;
+      line-height: 1.5;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: inherit;
+    }
+    blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { font-weight: 600; background: var(--code-bg); }
+    ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.3rem; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    .status-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2em 0.6em;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+    footer a { color: var(--muted); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="https://attestto.com">&larr; attestto.com</a> &nbsp;&middot;&nbsp;
+    <a class="back" href="/">All Specs</a>
+<h1 id="ieal-identity-evidence-assurance-level">IEAL — Identity Evidence Assurance Level</h1>
+<p><strong>Specification version:</strong> 0.1 (Working Draft) <strong>Publication date:</strong> 2026-07-01 <strong>Canonical URL (planned):</strong> https://spec.attestto.com/ieal <strong>Editors:</strong> Eduardo Chongkan (Attestto) <strong>License:</strong> Specification text is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International (CC-BY 4.0)</a>. Accompanying reference code, JSON Schemas, and examples are licensed under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. <strong>Repository (planned):</strong> https://github.com/attestto/spec-ieal</p>
+<hr />
+<h2 id="abstract">Abstract</h2>
+<p>This specification defines the <strong>Identity Evidence Assurance Level (IEAL)</strong>, a compositional model for classifying identity evidence artifacts across three orthogonal axes: <strong>Capture</strong>, <strong>Algorithm</strong>, and <strong>Storage</strong>. A composite IEAL level (L0 through L6) represents the assurance strength of an identity evidence artifact and is intended to be included as a claim in W3C Verifiable Credentials or equivalent identity assertions.</p>
+<p>IEAL is designed as implementation guidance for the identity-assurance controls in NIST Special Publication 800-63-4 in architectures that are local-first, device-attested, and require per-event user consent. IEAL extends and operationalizes NIST 800-63; it does not replace or compete with it.</p>
+<p>This specification is carrier-agnostic. IEAL claims MAY be carried in W3C Verifiable Credentials (VC-JWT, SD-JWT), IETF COSE-signed objects, embedded metadata in existing document containers (PDF signature dictionaries, C2PA manifests), or a standalone envelope. Carrier-specific encoding rules are defined in separate specifications and are not part of the IEAL core.</p>
+<hr />
+<h2 id="status-of-this-document">Status of This Document</h2>
+<p>This document is a <strong>Working Draft (v0.1)</strong> published for public review, peer critique, and standards-body engagement. It is not a final specification. Breaking changes may occur before v1.0.</p>
+<p>Feedback is welcomed through:</p>
+<ul>
+<li>GitHub Issues on the specification repository (once published)</li>
+<li>W3C Credentials Community Group (CCG) mailing list</li>
+<li>Decentralized Identity Foundation (DIF) working groups</li>
+<li>Direct correspondence to the editors</li>
+</ul>
+<p>The specification will progress through community review before consideration by any formal standards-development organization.</p>
+<p><strong>Relationship to other Attestto specifications:</strong></p>
+<ul>
+<li><strong><code>did:pki</code></strong> (<a href="https://spec.attestto.com/did-pki">spec.attestto.com/did-pki</a>) — DID method for CA-hierarchy trust anchors</li>
+<li><strong><code>did:sns</code></strong> (<a href="https://spec.attestto.com/did-sns">spec.attestto.com/did-sns</a>) — DID method for Solana Name Service bindings</li>
+<li><strong>IEAL</strong> (this document) — identity evidence assurance model</li>
+<li><strong>Attestto Evidence Container</strong> (planned) — carrier-specific encoding for embedded and standalone artifacts</li>
+</ul>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol type="1">
+<li>Introduction</li>
+<li>Terminology</li>
+<li>Model overview</li>
+<li>Capture axis</li>
+<li>Algorithm axis</li>
+<li>Storage axis</li>
+<li>Composite IEAL levels</li>
+<li>Claim schema</li>
+<li>Carriers</li>
+<li>Verifier policy</li>
+<li>Vendor neutrality</li>
+<li>Conformance</li>
+<li>Security considerations</li>
+<li>Privacy considerations</li>
+<li>Internationalization considerations</li>
+<li>Accessibility considerations</li>
+<li>Change log</li>
+</ol>
+<p>Appendix A. Crosswalks to related standards Appendix B. JSON Schema for the IEAL claim Appendix C. Example IEAL claims</p>
+<p>References</p>
+<hr />
+<h2 id="introduction">1. Introduction</h2>
+<h3 id="motivation">1.1 Motivation</h3>
+<p>Identity evidence artifacts, such as government-issued credentials, biometric captures, and signed attestations, vary widely in the assurance they provide. A photograph of a document captured through an unattested browser is not equivalent to a captured document verified through a hardware-attested mobile device using an ISO/IEC 30107-3-certified presentation-attack-detection algorithm and stored in a hardware-protected key store.</p>
+<p>Existing standards define assurance levels for specific pieces of this chain. NIST SP 800-63-4 defines Identity Assurance Levels (IAL) for enrollment and identity proofing. ISO/IEC 30107-3 defines Presentation Attack Detection (PAD) levels for biometric anti-spoofing. Neither standard describes a compositional model that spans capture, algorithm, and storage as separable axes.</p>
+<p>IEAL fills this gap. It defines a composable model that:</p>
+<ul>
+<li>Separates concerns across three axes so that improvements on one axis (e.g., stronger storage) do not require rework on the others</li>
+<li>Aligns each axis with existing standards (NIST 800-63-4 IAL, ISO/IEC 30107-3, FIDO device attestation) rather than inventing new criteria</li>
+<li>Produces a single composite level (L0 through L6) that verifiers can use as a per-operation policy input</li>
+<li>Encodes the composite level and per-axis details as a machine-verifiable claim inside identity evidence artifacts</li>
+</ul>
+<h3 id="relationship-to-nist-sp-800-63-4">1.2 Relationship to NIST SP 800-63-4</h3>
+<p>NIST Special Publication 800-63-4 was finalized on 2025-07-31. Its §2.4 introduces the <strong>Subscriber-Controlled Wallet</strong> model (Figure 5): a credential service provider issues attribute bundles, the subscriber holds and presents them from a wallet under their control, and a relying party verifies. IEAL is designed to fit inside that model. IEAL fills the specification whitespace that NIST leaves to implementer policy:</p>
+<ul>
+<li>The IEAL <strong>Capture</strong> axis grades the cryptographic attestation of the capture environment. NIST SP 800-63A §4 (Identity Proofing) defines the enrollment and proofing controls but does not grade capture-environment attestation independently.</li>
+<li>The IEAL <strong>Algorithm</strong> axis grades Presentation Attack Detection strength consistent with the normative PAD requirements in NIST SP 800-63A §3.13 (<code>ProofBios</code>), which requires conformance to ISO/IEC 30107-3:2023 and an IAPAR below 0.07.</li>
+<li>The IEAL <strong>Storage</strong> axis grades where the subscriber-controlled witness resides and how it is protected. This is consistent with NIST SP 800-63B §3 authenticator-management requirements (non-exportable private key in TPM, TEE, or Secure Element at AAL3; syncable authenticators SHALL NOT be used at AAL3) and extends the model by grading per-event access control over retained biometric witnesses.</li>
+<li>IEAL treats per-event consent as normative for witness access, consistent with NIST SP 800-63C §4.6.1.3 (Runtime Decision), which requires that identity providers obtain positive confirmation before releasing attributes and prohibits conditioning identity service on unrelated processing consent.</li>
+</ul>
+<p>Attribute-bundle formats named in NIST SP 800-63C §3.12.1 (W3C Verifiable Credentials, SD-JWT, ISO/IEC 18013-5 mDoc) are all acceptable carriers for IEAL claims. See Section 9.</p>
+<p>Composite IEAL levels L4, L5, and L6 approximate NIST IAL2, IAL2 with additional controls, and a subset of IAL3 controls, respectively. A separate crosswalk document (see Appendix A) provides the detailed mapping. That crosswalk is informational; it is not endorsed by NIST and does not constitute a certification claim.</p>
+<p>IEAL does not replace or compete with NIST SP 800-63-4.</p>
+<h3 id="scope">1.3 Scope</h3>
+<p>This specification defines:</p>
+<ul>
+<li>The three IEAL axes and the ordered values on each axis</li>
+<li>The composite IEAL levels L0 through L6</li>
+<li>The IEAL claim schema for inclusion in identity evidence artifacts</li>
+<li>Verifier policy conventions for per-operation IEAL floors</li>
+<li>Conformance requirements for producers and verifiers</li>
+</ul>
+<p>This specification classifies single capture events. <strong>Session-based assurance</strong>, where a sequence of IEAL claims is produced over a continuous verification session (for example, in remote-proctoring workflows or multi-party signing ceremonies), is out of scope for this version and MAY be addressed in a future revision. Verifiers MAY define session policies over multiple IEAL claims.</p>
+<h3 id="non-goals">1.4 Non-goals</h3>
+<p>This specification does not:</p>
+<ul>
+<li>Define a new file format or envelope for identity evidence artifacts. Carriers are specified separately.</li>
+<li>Certify implementations. Formal certification against ISO/IEC 30107-3 or NIST SP 800-63-4 is performed by accredited assessors and is out of scope.</li>
+<li>Endorse specific vendors or commercial implementations. See Section 11.</li>
+<li>Define new cryptographic primitives. IEAL relies on established IETF, W3C, and ISO cryptographic standards.</li>
+<li>Replace or compete with NIST SP 800-63-4, ISO/IEC 30107-3, eIDAS, or ICAO 9303. IEAL references and extends these standards.</li>
+</ul>
+<hr />
+<h2 id="terminology">2. Terminology</h2>
+<h3 id="requirements-language-keywords">2.1 Requirements-language keywords</h3>
+<p>The keywords <strong>MUST</strong>, <strong>MUST NOT</strong>, <strong>REQUIRED</strong>, <strong>SHALL</strong>, <strong>SHALL NOT</strong>, <strong>SHOULD</strong>, <strong>SHOULD NOT</strong>, <strong>RECOMMENDED</strong>, <strong>MAY</strong>, and <strong>OPTIONAL</strong> in this document are to be interpreted as described in <a href="https://www.rfc-editor.org/info/bcp14">BCP 14</a> (<a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a> and <a href="https://www.rfc-editor.org/rfc/rfc8174">RFC 8174</a>) when, and only when, they appear in all capitals.</p>
+<h3 id="definitions">2.2 Definitions</h3>
+<p><strong>Identity evidence artifact</strong> A digital artifact that carries a claim about a subject’s identity, together with cryptographic evidence supporting that claim. Examples include a captured government-issued credential, a biometric-liveness attestation, or a signed presentation of a Verifiable Credential.</p>
+<p><strong>Capture</strong> The process by which the digital representation of an identity evidence artifact enters the system. Captures include, for example, taking a photograph of a document, recording a video of a presentation attack detection challenge, or reading a chip on an ICAO 9303 travel document.</p>
+<p><strong>Capture attestation</strong> A cryptographic attestation, produced by a platform or hardware component, that asserts properties of the environment in which a capture was performed. Examples include Play Integrity API attestation, Apple App Attest and DeviceCheck, and FIDO CTAP2 authenticator attestation.</p>
+<p><strong>Algorithm</strong> The set of computational procedures applied to a capture to detect presentation attacks, verify liveness, or otherwise assess whether the capture faithfully represents the subject at the time of capture.</p>
+<p><strong>Presentation attack detection (PAD)</strong> As defined in ISO/IEC 30107-3, the automated determination of a presentation attack. Certified PAD levels (L1, L2) are assessed by iBeta Quality Assurance and other NVLAP-accredited biometric testing laboratories.</p>
+<p><strong>Storage</strong> The mechanism by which the resulting identity evidence artifact (including any witness data such as encrypted video, biometric templates, or capture attestations) is retained and access-controlled after capture.</p>
+<p><strong>Witness</strong> Retained evidence associated with an identity evidence artifact that supports post-hoc verification. Examples include a short encrypted video of a liveness challenge, a signed attestation blob from the capture platform, or a biometric template.</p>
+<p><strong>Witness commitment</strong> A cryptographic hash of the witness that is included in the identity evidence artifact and permits verification that a later-produced witness has not been substituted.</p>
+<p><strong>Composite IEAL level</strong> The overall assurance level (L0 through L6) assigned to an identity evidence artifact, derived from the artifact’s values on the Capture, Algorithm, and Storage axes.</p>
+<p><strong>Verifier</strong> A party that consumes an identity evidence artifact to make an authorization or trust decision.</p>
+<p><strong>Verifier policy</strong> A rule set, published or enforced by a verifier, specifying the minimum IEAL level required to authorize a given operation.</p>
+<p><strong>Carrier</strong> The concrete on-the-wire representation of an identity evidence artifact. Carriers include W3C Verifiable Credentials (VC-JWT, SD-JWT), IETF COSE objects, embedded metadata in existing document containers, and standalone envelopes.</p>
+<hr />
+<h2 id="model-overview">3. Model overview</h2>
+<h3 id="the-three-axes">3.1 The three axes</h3>
+<p>IEAL classifies identity evidence artifacts across three orthogonal axes. Each axis represents a distinct concern and is defined by an ordered enumeration of values.</p>
+<ul>
+<li><strong>Capture axis</strong> — how the capture reached the system and what can be cryptographically attested about the capture environment</li>
+<li><strong>Algorithm axis</strong> — what liveness or presentation-attack-detection algorithm was applied to the capture and what certification, if any, that algorithm carries</li>
+<li><strong>Storage axis</strong> — how the resulting evidence is retained and access-controlled</li>
+</ul>
+<p>Each axis is defined in Sections 4, 5, and 6, respectively. The composite level L0 through L6 is defined in Section 7 by combining axis values.</p>
+<h3 id="compositional-principles">3.2 Compositional principles</h3>
+<p>The three axes are orthogonal by design. An implementation MAY improve its Storage assurance without changing its Capture or Algorithm assurance. Verifiers MAY require different minima on different axes for different operations.</p>
+<p>Nothing in this specification requires that all three axes reach the same level. Composite level assignment (Section 7) is defined for the useful combinations only. Combinations not listed in Section 7 are undefined for this version of the specification.</p>
+<hr />
+<h2 id="capture-axis">4. Capture axis</h2>
+<p>The Capture axis describes the environment in which the identity evidence was captured and the strength of any cryptographic attestation over that environment.</p>
+<h3 id="values">4.1 Values</h3>
+<p><strong>C0 — Untrusted client</strong> Capture was performed on a client whose environment cannot be cryptographically attested. Examples include browser access from a desktop or laptop with no hardware attestation, and native mobile applications without platform attestation. Producers MUST treat C0 captures as susceptible to camera-injection attacks, virtual-camera drivers, and screen-replay attacks.</p>
+<p><strong>C1 — Software-attested mobile</strong> Capture was performed on a mobile device, and the capture session was bound to a platform-level attestation issued by the operating system vendor. On Android platforms, this attestation SHOULD be a Play Integrity API response containing at minimum a <code>MEETS_BASIC_INTEGRITY</code> verdict. On iOS platforms, this attestation SHOULD be an App Attest assertion. In both cases, the attestation MUST be bound to a session nonce generated by the producer.</p>
+<p><strong>C2 — Hardware-attested mobile</strong> As C1, with the additional requirement that the attestation MUST bind a hardware-protected key. On Android, the Play Integrity response MUST contain a <code>MEETS_STRONG_INTEGRITY</code> verdict and the attested key MUST reside in StrongBox or an equivalent hardware-backed key store. On iOS, the App Attest attestation MUST bind a key held in the Secure Enclave.</p>
+<h3 id="producer-requirements">4.2 Producer requirements</h3>
+<p>Producers MUST record the Capture axis value in the IEAL claim. Producers that assert C1 or C2 MUST include the raw attestation object (or a verifiable reference to it) in the IEAL claim.</p>
+<h3 id="verifier-requirements">4.3 Verifier requirements</h3>
+<p>Verifiers that consume C1 or C2 assertions MUST verify the platform attestation against the OS vendor’s public keys and the session nonce. Verifiers MUST reject assertions whose attestations do not verify or whose nonces do not match the presented artifact.</p>
+<hr />
+<h2 id="algorithm-axis">5. Algorithm axis</h2>
+<p>The Algorithm axis describes the presentation-attack-detection or liveness-verification algorithm applied to the capture.</p>
+<h3 id="values-1">5.1 Values</h3>
+<p><strong>A0 — None</strong> No presentation attack detection or liveness verification was performed.</p>
+<p><strong>A1 — Active challenge (basic)</strong> An active liveness challenge was performed, such as a scripted pose sequence, a blink prompt, or a randomized head-movement request. The algorithm MAY rely solely on landmark-based movement detection without additional anti-spoof measures. The Attestto reference implementation <code>attestto-active-5pose</code> at algorithm version 1 is an example of an A1 implementation.</p>
+<p><strong>A2 — Active challenge (hardened)</strong> As A1, with additional anti-spoof measures. Implementations at A2 MUST include at minimum:</p>
+<ul>
+<li>Randomized challenge order and count within a session so that pre-recorded sequences cannot be replayed</li>
+<li>A real eye-aspect-ratio blink detector (or equivalent facial-landmark blink detector) rather than a fixed-duration timer</li>
+<li>Screen or moiré detection over the captured frames, applied in the frequency domain, to reject screen-based replay attacks</li>
+<li>Three-dimensional head-pose estimation from facial landmarks to reject flat-photograph attacks</li>
+</ul>
+<p><strong>A3 — PAD Level 1</strong> The algorithm has been formally certified under ISO/IEC 30107-3 Presentation Attack Detection Level 1 by an iBeta Quality Assurance or other NVLAP-accredited biometric testing laboratory. The certification MUST be currently valid at the time of capture.</p>
+<p><strong>A4 — PAD Level 2</strong> As A3, at Presentation Attack Detection Level 2.</p>
+<h3 id="producer-requirements-1">5.2 Producer requirements</h3>
+<p>Producers MUST record the Algorithm axis value in the IEAL claim, the algorithm identifier and version, and, where applicable, the vendor identifier and the current PAD certification identifier.</p>
+<p>Producers asserting A3 or A4 MUST NOT claim these levels unless the specific algorithm version deployed at the time of capture holds the corresponding PAD certification. Producers MUST NOT self-certify PAD levels.</p>
+<h3 id="verifier-requirements-1">5.3 Verifier requirements</h3>
+<p>Verifiers that consume A3 or A4 assertions SHOULD verify the referenced PAD certification against the certifying laboratory’s public register. Verifiers MAY treat a PAD certification that has expired between capture and verification as reduced-assurance.</p>
+<hr />
+<h2 id="storage-axis">6. Storage axis</h2>
+<p>The Storage axis describes how the resulting identity evidence artifact and any associated witness are retained and access-controlled.</p>
+<h3 id="values-2">6.1 Values</h3>
+<p><strong>S0 — None</strong> No witness is retained beyond the identity evidence artifact itself. The artifact carries a claim of capture and algorithm processing but no post-hoc verifiable witness.</p>
+<p><strong>S1 — Operating-system-managed secret store</strong> The witness (or the key encrypting the witness) is stored in an operating-system-managed secret store such as the macOS Keychain, Windows Data Protection API (DPAPI), or a compliant Linux Secret Service implementation. Access to the witness MUST require an operating-system-mediated authorization event (for example, Touch ID, Windows Hello, or an equivalent).</p>
+<p><strong>S2 — Hardware-protected key store</strong> As S1, with the additional requirement that the encryption key protecting the witness MUST reside in a hardware-protected key store. Examples include the Apple Secure Enclave accessed via Keychain access-control-list constraints, Android StrongBox, and Windows Trusted Platform Module 2.0 bound keys.</p>
+<p><strong>S3 — External hardware token</strong> The key protecting the witness MUST be held on an external hardware security token, such as a FIDO2 security key with a <code>hmac-secret</code> extension, a smart card, or an equivalent hardware token. Witness access requires physical possession of the token and user verification on the token.</p>
+<p><strong>S4 — Multi-party recovery</strong> Witness release requires threshold multi-party approval. Implementations at S4 MUST use a verifiable secret-sharing scheme (for example, Shamir Secret Sharing with an M-of-N threshold where N is at least 3 and M is at most N minus 1) or an equivalent threshold-cryptography construction. Additional operation-specific co-signatures MAY be required by verifier policy (see Section 10).</p>
+<h3 id="dual-storage-architecture">6.2 Dual-storage architecture</h3>
+<p>Storage of an identity evidence artifact is not required to be a single location. Producers and verifiers MAY jointly hold copies of an artifact under the following model:</p>
+<ul>
+<li>The <strong>primary copy</strong> is held by the subject in a subject-controlled store that satisfies the asserted Storage axis level</li>
+<li>One or more <strong>derivative copies</strong> MAY be held by regulated counterparties (for example, banks, notaries, insurers) for their own retention obligations</li>
+<li>Derivative copies MUST be encrypted such that the counterparty holding them cannot access the plaintext without an explicit, per-event capability token issued by the subject</li>
+<li>The counterparty holding a derivative copy MAY prove possession for audit purposes without accessing plaintext</li>
+<li>Access-request protocols between counterparties and the subject’s device are OUT OF SCOPE for this specification and are defined separately</li>
+</ul>
+<p>Producers implementing dual storage MUST record all storage locations in the IEAL claim and MUST record the same Storage axis value for the primary and each derivative copy.</p>
+<h3 id="retention">6.3 Retention</h3>
+<p>Witness retention duration is a matter of verifier or subject policy and is not fixed by this specification. Deletion of a witness after retention expiry MUST be cryptographically effective: the witness plaintext and the key material used to encrypt the witness MUST both be destroyed such that the witness cannot be reconstructed. The identity evidence artifact and its witness commitment MAY remain valid for post-deletion verification of the fact that a witness existed, while forensic replay of the witness itself is no longer possible.</p>
+<h3 id="producer-requirements-2">6.4 Producer requirements</h3>
+<p>Producers MUST record the Storage axis value in the IEAL claim and MUST record the witness commitment, the encryption algorithm identifier, and the intended retention duration.</p>
+<h3 id="verifier-requirements-2">6.5 Verifier requirements</h3>
+<p>Verifiers MAY require a specific Storage axis minimum as part of their policy. Verifiers that require access to the witness for auditing purposes MUST use the access-request protocol referenced in Section 6.2 and MUST NOT assume unilateral access to the witness plaintext.</p>
+<hr />
+<h2 id="composite-ieal-levels">7. Composite IEAL levels</h2>
+<p>Composite IEAL levels L0 through L6 are assigned by combining values from the three axes as follows.</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Composite</th>
+<th>Capture</th>
+<th>Algorithm</th>
+<th>Storage</th>
+<th>Approximate NIST IAL correspondence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L0</strong></td>
+<td>C0</td>
+<td>A0</td>
+<td>S0</td>
+<td>Below IAL1</td>
+</tr>
+<tr>
+<td><strong>L1</strong></td>
+<td>C0</td>
+<td>A1</td>
+<td>S1</td>
+<td>Approximately IAL1</td>
+</tr>
+<tr>
+<td><strong>L2</strong></td>
+<td>C0</td>
+<td>A2</td>
+<td>S2</td>
+<td>Between IAL1 and IAL2</td>
+</tr>
+<tr>
+<td><strong>L3</strong></td>
+<td>C1 or C2</td>
+<td>A2</td>
+<td>S2</td>
+<td>Approaching IAL2</td>
+</tr>
+<tr>
+<td><strong>L4</strong></td>
+<td>C1 or C2</td>
+<td>A3</td>
+<td>S2</td>
+<td>IAL2</td>
+</tr>
+<tr>
+<td><strong>L5</strong></td>
+<td>C1 or C2</td>
+<td>A4</td>
+<td>S2</td>
+<td>IAL2 with additional controls</td>
+</tr>
+<tr>
+<td><strong>L6</strong></td>
+<td>C2</td>
+<td>A4</td>
+<td>S2 and S3 required, S4 required for release</td>
+<td>Subset of IAL3 controls</td>
+</tr>
+</tbody>
+</table>
+<p>The NIST correspondence column is informational. A separate crosswalk document (see Appendix A) provides the detailed mapping and disclaimers. Composite IEAL levels are Attestto’s specification and do not constitute NIST certification claims.</p>
+<p><strong>Combinations not listed</strong> are undefined for this version. A producer MUST NOT assert a composite IEAL level for an artifact whose axis values do not match one of the rows above. Producers MAY, however, record axis values without asserting a composite level; verifiers MAY then apply their own composition policy.</p>
+<p><strong>L6 additional constraints:</strong></p>
+<ul>
+<li>At L6, the Storage axis requires that witness release be conditioned on both S3 (external hardware token possession by the subject at the release ceremony) and S4 (multi-party co-signature)</li>
+<li>The multi-party composition for S4 at L6 is specified by verifier policy per operation type (see Section 10)</li>
+</ul>
+<hr />
+<h2 id="claim-schema">8. Claim schema</h2>
+<p>The IEAL claim is a JSON object suitable for inclusion in a W3C Verifiable Credential <code>evidence</code> array, an equivalent claim in a SD-JWT or COSE-signed object, or an embedded metadata field in a document-container carrier.</p>
+<h3 id="fields">8.1 Fields</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Cardinality</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td>1</td>
+<td>string array</td>
+<td>MUST include <code>"IdentityEvidenceAssurance"</code></td>
+</tr>
+<tr>
+<td><code>ieal</code></td>
+<td>1</td>
+<td>string</td>
+<td>Composite level, one of <code>"L0"</code> through <code>"L6"</code></td>
+</tr>
+<tr>
+<td><code>capture</code></td>
+<td>1</td>
+<td>object</td>
+<td>Capture axis details, see 8.2</td>
+</tr>
+<tr>
+<td><code>algorithm</code></td>
+<td>1</td>
+<td>object</td>
+<td>Algorithm axis details, see 8.3</td>
+</tr>
+<tr>
+<td><code>storage</code></td>
+<td>1</td>
+<td>object</td>
+<td>Storage axis details, see 8.4</td>
+</tr>
+<tr>
+<td><code>capturedAt</code></td>
+<td>1</td>
+<td>string</td>
+<td>ISO 8601 timestamp of the capture</td>
+</tr>
+<tr>
+<td><code>producer</code></td>
+<td>1</td>
+<td>object</td>
+<td>Producer identity and signature, see 8.5</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-capture-object">8.2 The <code>capture</code> object</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Cardinality</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>axisValue</code></td>
+<td>1</td>
+<td>string</td>
+<td>One of <code>"C0"</code>, <code>"C1"</code>, <code>"C2"</code></td>
+</tr>
+<tr>
+<td><code>platform</code></td>
+<td>0..1</td>
+<td>string</td>
+<td><code>"android"</code>, <code>"ios"</code>, <code>"web"</code>, or an equivalent identifier</td>
+</tr>
+<tr>
+<td><code>attestation</code></td>
+<td>0..1</td>
+<td>string</td>
+<td>Base64-encoded attestation object (required for C1 and C2)</td>
+</tr>
+<tr>
+<td><code>attestationType</code></td>
+<td>0..1</td>
+<td>string</td>
+<td><code>"play-integrity"</code>, <code>"app-attest"</code>, or an equivalent identifier</td>
+</tr>
+<tr>
+<td><code>nonce</code></td>
+<td>0..1</td>
+<td>string</td>
+<td>Session nonce bound to the attestation (required for C1 and C2)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-algorithm-object">8.3 The <code>algorithm</code> object</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Cardinality</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>axisValue</code></td>
+<td>1</td>
+<td>string</td>
+<td>One of <code>"A0"</code>, <code>"A1"</code>, <code>"A2"</code>, <code>"A3"</code>, <code>"A4"</code></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>1</td>
+<td>string</td>
+<td>Algorithm identifier (for example, <code>"attestto-active-5pose"</code>)</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>1</td>
+<td>string</td>
+<td>Algorithm version (SemVer)</td>
+</tr>
+<tr>
+<td><code>vendor</code></td>
+<td>0..1</td>
+<td>string</td>
+<td>Vendor identifier (for A3 and A4)</td>
+</tr>
+<tr>
+<td><code>padCertification</code></td>
+<td>0..1</td>
+<td>object</td>
+<td>PAD certification reference (required for A3 and A4)</td>
+</tr>
+<tr>
+<td><code>score</code></td>
+<td>0..1</td>
+<td>number</td>
+<td>Algorithm-reported confidence (0.0 to 1.0)</td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td>0..1</td>
+<td>number</td>
+<td>Threshold applied by the producer (0.0 to 1.0)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-storage-object">8.4 The <code>storage</code> object</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Cardinality</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>axisValue</code></td>
+<td>1</td>
+<td>string</td>
+<td>One of <code>"S0"</code>, <code>"S1"</code>, <code>"S2"</code>, <code>"S3"</code>, <code>"S4"</code></td>
+</tr>
+<tr>
+<td><code>witnessCommitment</code></td>
+<td>0..1</td>
+<td>string</td>
+<td>Hash of the witness (required for S1 and above)</td>
+</tr>
+<tr>
+<td><code>witnessHashAlgorithm</code></td>
+<td>0..1</td>
+<td>string</td>
+<td>Hash algorithm identifier (for example, <code>"sha-256"</code>)</td>
+</tr>
+<tr>
+<td><code>witnessEncryptionAlgorithm</code></td>
+<td>0..1</td>
+<td>string</td>
+<td>Encryption algorithm identifier</td>
+</tr>
+<tr>
+<td><code>witnessRetention</code></td>
+<td>0..1</td>
+<td>string</td>
+<td>ISO 8601 duration or the token <code>"user-controlled"</code></td>
+</tr>
+<tr>
+<td><code>locations</code></td>
+<td>0..*</td>
+<td>object array</td>
+<td>Storage location descriptors (see 6.2)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-producer-object">8.5 The <code>producer</code> object</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Cardinality</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>1</td>
+<td>string</td>
+<td>Producer DID</td>
+</tr>
+<tr>
+<td><code>signature</code></td>
+<td>1</td>
+<td>string</td>
+<td>Detached signature over the canonical serialization of the IEAL claim</td>
+</tr>
+<tr>
+<td><code>signatureAlgorithm</code></td>
+<td>1</td>
+<td>string</td>
+<td>Signature algorithm identifier (for example, <code>"Ed25519"</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Producers MUST sign the IEAL claim. The signature MUST cover the canonical JSON serialization of the claim excluding the <code>signature</code> field itself.</p>
+<h3 id="example">8.6 Example</h3>
+<p>An informative example is provided in Appendix C.</p>
+<hr />
+<h2 id="carriers">9. Carriers</h2>
+<p>IEAL claims are carrier-agnostic. A carrier is the concrete on-the-wire representation of an identity evidence artifact. This specification RECOMMENDS carriers in the following order of preference, but does not require any specific carrier.</p>
+<h3 id="embed-first-pattern">9.1 Embed-first pattern</h3>
+<p>Where the identity evidence artifact is associated with an existing document container (for example, a signed PDF, a photograph, a video recording of a notarial act), producers SHOULD embed the IEAL claim inside that container using the container’s native metadata mechanism. Examples:</p>
+<ul>
+<li><strong>PDF documents</strong> — the IEAL claim SHOULD be embedded in the PDF signature dictionary or in a well-known metadata dictionary</li>
+<li><strong>JPEG and PNG images</strong> — the IEAL claim SHOULD be embedded in XMP metadata or in a C2PA manifest store where present</li>
+<li><strong>MP4 and MOV video</strong> — the IEAL claim SHOULD be embedded in a C2PA manifest store</li>
+<li><strong>DOCX and ODT documents</strong> — the IEAL claim SHOULD be embedded in the package metadata</li>
+</ul>
+<p>Embed-first carriers preserve the original document container. Recipients MAY open the document with any conforming viewer without additional software, and MAY verify the IEAL claim with an IEAL-aware verifier.</p>
+<h3 id="verifiable-credential-carriers">9.2 Verifiable Credential carriers</h3>
+<p>Where the identity evidence artifact is a standalone credential (for example, a professional-license attestation or a biometric-verification result with no host document), producers SHOULD carry the IEAL claim as an entry in the <code>evidence</code> array of a W3C Verifiable Credential per the W3C VC Data Model 2.0.</p>
+<p>Producers MAY use either JSON-LD, VC-JWT (per <a href="https://www.rfc-editor.org/rfc/rfc7519">RFC 7519</a>), SD-JWT (per current IETF drafts), or COSE-signed (per <a href="https://www.rfc-editor.org/rfc/rfc8152">RFC 8152</a>) serializations. Selection is at producer discretion.</p>
+<h3 id="envelope-of-last-resort">9.3 Envelope of last resort</h3>
+<p>Where neither an existing document container nor a VC representation is appropriate, producers MAY use a standalone envelope. Carrier-specific encoding rules for such an envelope are defined in a separate specification and are not part of this document.</p>
+<h3 id="verifier-obligation">9.4 Verifier obligation</h3>
+<p>Conforming verifiers MUST accept IEAL claims in at least the embed-first and W3C Verifiable Credential carriers. Conforming verifiers SHOULD accept the standalone envelope where a corresponding profile is published.</p>
+<hr />
+<h2 id="verifier-policy">10. Verifier policy</h2>
+<p>Verifiers publish per-operation IEAL floors. This section defines conventions for such policies. The specific values below are illustrative examples and not normative requirements.</p>
+<h3 id="illustrative-policy-example">10.1 Illustrative policy example</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Illustrative IEAL floor</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read a credential held by the subject</td>
+<td>L0</td>
+<td>The subject owns the credential</td>
+</tr>
+<tr>
+<td>Present a credential to a verifier</td>
+<td>L1</td>
+<td>Basic identity presence</td>
+</tr>
+<tr>
+<td>Sign a personal document (non-notarial)</td>
+<td>L2</td>
+<td>Reasonable friction proportionate to the operation</td>
+</tr>
+<tr>
+<td>Present a government-issued national identity credential</td>
+<td>L3</td>
+<td>Ties presentation to an attested device</td>
+</tr>
+<tr>
+<td>Sign a notarial act</td>
+<td>L5</td>
+<td>Notary law requires strong assurance</td>
+</tr>
+<tr>
+<td>Approve a high-value financial transaction</td>
+<td>L5 or higher</td>
+<td>Financial threshold</td>
+</tr>
+<tr>
+<td>Approve a fiduciary or patron-tier operation</td>
+<td>L6</td>
+<td>Multi-party assurance</td>
+</tr>
+</tbody>
+</table>
+<h3 id="policy-publication">10.2 Policy publication</h3>
+<p>Verifiers SHOULD publish their per-operation IEAL floor policies in machine-readable form so that producers can select the appropriate IEAL target before capture rather than after.</p>
+<h3 id="adaptive-assurance">10.3 Adaptive assurance</h3>
+<p>Verifiers MAY require different IEAL floors for the same operation under different risk contexts (for example, a higher IEAL floor for a first-time counterparty or for a transaction that exceeds a value threshold). Adaptive-assurance policies are out of scope for this specification but are complementary to it.</p>
+<hr />
+<h2 id="vendor-neutrality">11. Vendor neutrality</h2>
+<p>This specification is vendor-neutral. Any provider meeting the axis criteria defined in Sections 4, 5, and 6 MAY satisfy an IEAL axis value. Attestto does not endorse, prefer, or receive compensation from any specific vendor for inclusion in this specification.</p>
+<p>For the current list of qualifying vendors on the Algorithm axis at PAD Level 1 or PAD Level 2, consult the iBeta Quality Assurance public register and other NVLAP-accredited biometric testing laboratories. Attestto does not maintain a separate vendor list.</p>
+<p>Formal Attestto integration partnerships, if any exist, are publicly disclosed at <a href="https://attestto.com/partners">attestto.com/partners</a>.</p>
+<hr />
+<h2 id="conformance">12. Conformance</h2>
+<h3 id="producer-conformance">12.1 Producer conformance</h3>
+<p>A conforming producer MUST:</p>
+<ul>
+<li>Populate all required fields of the IEAL claim per Section 8</li>
+<li>Assert only composite IEAL levels supported by the artifact’s actual axis values per Section 7</li>
+<li>Include cryptographic attestations for Capture axis values C1 and C2 per Section 4</li>
+<li>Include valid PAD certification references for Algorithm axis values A3 and A4 per Section 5</li>
+<li>Include a witness commitment for Storage axis values S1 through S4 per Section 6</li>
+<li>Sign the IEAL claim per Section 8.5</li>
+<li>Refrain from asserting PAD certifications not currently held for the deployed algorithm version</li>
+</ul>
+<h3 id="verifier-conformance">12.2 Verifier conformance</h3>
+<p>A conforming verifier MUST:</p>
+<ul>
+<li>Verify the producer signature on the IEAL claim</li>
+<li>Verify platform attestations for Capture axis values C1 and C2 (Section 4.3)</li>
+<li>Verify the composite level against the axis values per Section 7</li>
+<li>Enforce per-operation IEAL floors as defined by verifier policy</li>
+</ul>
+<p>A conforming verifier SHOULD:</p>
+<ul>
+<li>Verify PAD certifications for Algorithm axis values A3 and A4 against the certifying laboratory’s public register</li>
+<li>Enforce witness commitment consistency where the witness is available</li>
+</ul>
+<hr />
+<h2 id="security-considerations">13. Security considerations</h2>
+<p><strong>Capture-injection resistance.</strong> Capture axis value C0 provides no protection against camera-injection attacks, virtual-camera drivers, USB HDMI capture devices, or real-time deepfake injection. Producers relying on C0 for high-assurance operations MUST NOT do so.</p>
+<p><strong>PAD algorithm currency.</strong> Presentation attack detection algorithms are the target of continuous research and the effectiveness of a specific algorithm may decrease over time as new attacks emerge. Producers and verifiers SHOULD treat PAD certifications as time-limited and MAY require re-certification within a validity window.</p>
+<p><strong>Nonce binding.</strong> Platform attestations (Play Integrity, App Attest) that are not bound to a producer-generated nonce may be replayed. Producers MUST generate a fresh nonce per capture session and MUST verify the nonce is embedded in the returned attestation.</p>
+<p><strong>Witness confidentiality.</strong> Witnesses often contain sensitive biometric data. Producers MUST encrypt witnesses at rest at all Storage axis values above S0. Producers MUST NOT transmit witnesses in plaintext over networks.</p>
+<p><strong>Signature agility.</strong> Producers SHOULD design for cryptographic agility. Post-quantum-resistant signature schemes (for example, ML-DSA per FIPS 204) SHOULD be considered as production-viable alternatives as they become widely deployed.</p>
+<hr />
+<h2 id="privacy-considerations">14. Privacy considerations</h2>
+<p><strong>Data minimization.</strong> Producers SHOULD retain only the witness data required to substantiate the IEAL claim. Original captures beyond the retained witness SHOULD be discarded.</p>
+<p><strong>Per-event consent.</strong> Producers MUST NOT release witness plaintext to any party other than the subject without an explicit, per-event capability token issued by the subject. Persistent share-by-default authorizations are not compliant with this specification.</p>
+<p><strong>Auditable access.</strong> Every access-request, grant, and denial event related to a witness SHOULD be recorded in a subject-accessible audit log.</p>
+<p><strong>Cross-border retention.</strong> Producers and verifiers holding derivative copies (Section 6.2) SHOULD consider applicable cross-border data-protection regulations, including but not limited to the EU General Data Protection Regulation, the Costa Rican PRODHAB Law, and equivalent national frameworks.</p>
+<p><strong>Selective disclosure.</strong> Where the underlying carrier supports selective disclosure (for example, SD-JWT, BBS+), producers SHOULD disclose only those fields of the IEAL claim required by the verifier for the specific operation.</p>
+<hr />
+<h2 id="internationalization-considerations">15. Internationalization considerations</h2>
+<p>The IEAL claim schema uses ISO 8601 timestamps and durations, ISO 639-1 language identifiers where applicable, and Unicode strings encoded in UTF-8. All identifiers defined by this specification are ASCII strings and case-sensitive.</p>
+<p>Human-readable identifiers (algorithm names, vendor identifiers) MAY be presented to end users in translated form. The machine-readable identifiers in the IEAL claim MUST remain in their canonical ASCII form regardless of end-user language.</p>
+<hr />
+<h2 id="accessibility-considerations">16. Accessibility considerations</h2>
+<p>Capture procedures at Algorithm axis A1 and A2 typically require the subject to perform active challenges (head movements, blinks, pose changes). Producers SHOULD offer alternative capture procedures for subjects who cannot perform such challenges, subject to the constraint that the alternative procedure MUST NOT reduce the asserted IEAL level below what is genuinely achieved.</p>
+<p>Verifier policies (Section 10) SHOULD provide accommodation processes for operations that would otherwise require IEAL levels that cannot be reached by the subject due to physical accessibility constraints.</p>
+<hr />
+<h2 id="change-log">17. Change log</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1</td>
+<td>2026-07-01</td>
+<td>Initial Working Draft.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="appendix-a.-crosswalks-to-related-standards-informational">Appendix A. Crosswalks to related standards (informational)</h2>
+<p>Separate crosswalk documents describe the correspondence between IEAL and other identity-assurance frameworks. These crosswalks are informational and do not constitute certification claims or endorsements. Each crosswalk includes a mandatory disclaimer that Attestto’s crosswalks are not endorsed by the referenced standards body.</p>
+<p>The planned crosswalk documents are:</p>
+<ul>
+<li><code>spec.attestto.com/ieal/crosswalks/nist-800-63</code> — NIST SP 800-63-4 IAL, AAL, and FAL</li>
+<li><code>spec.attestto.com/ieal/crosswalks/iso-30107-3</code> — ISO/IEC 30107-3 Presentation Attack Detection levels</li>
+<li><code>spec.attestto.com/ieal/crosswalks/eidas</code> — eIDAS Substantial and High assurance levels</li>
+</ul>
+<p>Formal certification against any of the referenced frameworks requires assessment by that framework’s authorized assessors. Nothing in these crosswalks substitutes for that assessment.</p>
+<hr />
+<h2 id="appendix-b.-json-schema-for-the-ieal-claim-informative">Appendix B. JSON Schema for the IEAL claim (informative)</h2>
+<p>A machine-readable JSON Schema for the IEAL claim will be published at <code>spec.attestto.com/ieal/schemas/ieal-claim.json</code> under the Apache License 2.0 alongside the v0.1 release.</p>
+<p>The schema will be normative for structural validation. Semantic requirements (Section 12) are not fully expressible in JSON Schema and require the conformance procedures described in this specification.</p>
+<hr />
+<h2 id="appendix-c.-example-ieal-claims-informative">Appendix C. Example IEAL claims (informative)</h2>
+<p>The following example shows an IEAL claim at composite level L3, embedded as an entry in the <code>evidence</code> array of a W3C Verifiable Credential.</p>
+<pre class="json"><code>{
+  &quot;@context&quot;: [
+    &quot;https://www.w3.org/ns/credentials/v2&quot;,
+    &quot;https://spec.attestto.com/ieal/v1&quot;
+  ],
+  &quot;type&quot;: [&quot;VerifiableCredential&quot;, &quot;NationalIdentityCredential&quot;],
+  &quot;issuer&quot;: &quot;did:pki:cr:tse&quot;,
+  &quot;validFrom&quot;: &quot;2026-07-01T14:23:45Z&quot;,
+  &quot;credentialSubject&quot;: {
+    &quot;id&quot;: &quot;did:key:z6Mk...&quot;,
+    &quot;givenName&quot;: &quot;REDACTED&quot;,
+    &quot;familyName&quot;: &quot;REDACTED&quot;,
+    &quot;nationalId&quot;: &quot;REDACTED&quot;
+  },
+  &quot;evidence&quot;: [{
+    &quot;type&quot;: [&quot;IdentityEvidenceAssurance&quot;],
+    &quot;ieal&quot;: &quot;L3&quot;,
+    &quot;capturedAt&quot;: &quot;2026-07-01T14:22:10Z&quot;,
+    &quot;capture&quot;: {
+      &quot;axisValue&quot;: &quot;C1&quot;,
+      &quot;platform&quot;: &quot;android&quot;,
+      &quot;attestationType&quot;: &quot;play-integrity&quot;,
+      &quot;attestation&quot;: &quot;eyJhbGciOi...&quot;,
+      &quot;nonce&quot;: &quot;R7v8kQ2mNp...&quot;
+    },
+    &quot;algorithm&quot;: {
+      &quot;axisValue&quot;: &quot;A2&quot;,
+      &quot;name&quot;: &quot;attestto-active-5pose&quot;,
+      &quot;version&quot;: &quot;2.0.0&quot;,
+      &quot;score&quot;: 0.91,
+      &quot;threshold&quot;: 0.75
+    },
+    &quot;storage&quot;: {
+      &quot;axisValue&quot;: &quot;S2&quot;,
+      &quot;witnessCommitment&quot;: &quot;e3b0c44298fc1c149afbf4c8996fb924...&quot;,
+      &quot;witnessHashAlgorithm&quot;: &quot;sha-256&quot;,
+      &quot;witnessEncryptionAlgorithm&quot;: &quot;xsalsa20-poly1305&quot;,
+      &quot;witnessRetention&quot;: &quot;P90D&quot;,
+      &quot;locations&quot;: [{
+        &quot;role&quot;: &quot;primary&quot;,
+        &quot;holder&quot;: &quot;did:key:z6Mk...&quot;
+      }]
+    },
+    &quot;producer&quot;: {
+      &quot;id&quot;: &quot;did:sns:vault.attestto&quot;,
+      &quot;signatureAlgorithm&quot;: &quot;Ed25519&quot;,
+      &quot;signature&quot;: &quot;3yZM8Q...&quot;
+    }
+  }]
+}</code></pre>
+<p>Additional examples covering L0 through L6 will be published alongside the v0.1 release.</p>
+<hr />
+<h2 id="references">References</h2>
+<h3 id="normative-references">Normative references</h3>
+<ul>
+<li><strong><a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a></strong> — Key words for use in RFCs to Indicate Requirement Levels</li>
+<li><strong><a href="https://www.rfc-editor.org/rfc/rfc8174">RFC 8174</a></strong> — Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</li>
+<li><strong><a href="https://www.rfc-editor.org/rfc/rfc7515">RFC 7515</a></strong> — JSON Web Signature (JWS)</li>
+<li><strong><a href="https://www.rfc-editor.org/rfc/rfc7516">RFC 7516</a></strong> — JSON Web Encryption (JWE)</li>
+<li><strong><a href="https://www.rfc-editor.org/rfc/rfc7519">RFC 7519</a></strong> — JSON Web Token (JWT)</li>
+<li><strong><a href="https://www.rfc-editor.org/rfc/rfc8152">RFC 8152</a></strong> — CBOR Object Signing and Encryption (COSE)</li>
+<li><strong><a href="https://www.iso.org/standard/79520.html">ISO/IEC 30107-3:2023</a></strong> — Information technology, Biometric presentation attack detection, Part 3: Testing and reporting</li>
+<li><strong><a href="https://www.w3.org/TR/vc-data-model-2.0/">W3C Verifiable Credentials Data Model 2.0</a></strong></li>
+<li><strong><a href="https://www.w3.org/TR/did-core/">W3C Decentralized Identifiers (DIDs) v1.0</a></strong></li>
+</ul>
+<h3 id="informative-references">Informative references</h3>
+<ul>
+<li><strong><a href="https://pages.nist.gov/800-63-4/">NIST SP 800-63-4</a></strong> — Digital Identity Guidelines, final 2025-07-31 (base + 800-63A Enrollment and Identity Proofing, 800-63B Authentication and Authenticator Management, 800-63C Federation and Assertions). DOI 10.6028/NIST.SP.800-63-4. Source repository at <a href="https://github.com/usnistgov/800-63-4">usnistgov/800-63-4</a>.</li>
+<li><strong><a href="https://csrc.nist.gov/pubs/sp/1800/12/final">NIST SP 1800-12</a></strong> — Derived Personal Identity Verification (PIV) Credentials on mobile devices</li>
+<li><strong><a href="https://csrc.nist.gov/pubs/sp/800/76/2/final">NIST SP 800-76-2</a></strong> — Biometric Specifications for Personal Identity Verification</li>
+<li><strong><a href="https://www.iso.org/standard/75302.html">ISO/IEC 24745</a></strong> — Biometric information protection</li>
+<li><strong><a href="https://www.iso.org/standard/73515.html">ISO/IEC 19795</a></strong> — Biometric performance testing and reporting methodology</li>
+<li><strong><a href="https://www.iso.org/standard/69084.html">ISO/IEC 18013-5</a></strong> — Mobile driving license (mDL)</li>
+<li><strong><a href="https://www.icao.int/publications/pages/publication.aspx?docnum=9303">ICAO Doc 9303</a></strong> — Machine Readable Travel Documents</li>
+<li><strong><a href="https://www.w3.org/TR/webauthn-3/">W3C WebAuthn Level 3</a></strong></li>
+<li><strong><a href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html">FIDO CTAP 2.1</a></strong></li>
+<li><strong><a href="https://eur-lex.europa.eu/eli/reg/2014/910/oj">eIDAS Regulation (EU) 910/2014</a></strong> and <strong><a href="https://eur-lex.europa.eu/eli/reg/2024/1183/oj">eIDAS 2.0 Regulation (EU) 2024/1183</a></strong> (EUDIW)</li>
+<li><strong><a href="https://c2pa.org/specifications/specifications/2.0/index.html">C2PA Technical Specification</a></strong> — Coalition for Content Provenance and Authenticity</li>
+<li><strong><a href="https://developer.android.com/google/play/integrity/overview">Google Play Integrity API</a></strong> (product documentation)</li>
+<li><strong><a href="https://developer.apple.com/documentation/devicecheck/establishing_your_app_s_integrity">Apple App Attest / DeviceCheck</a></strong> (product documentation)</li>
+<li><strong><a href="https://www.ibeta.com/iso-pad/">iBeta Quality Assurance</a></strong> — NVLAP-accredited PAD testing laboratory public register</li>
+</ul>
+<h3 id="reference-implementations">Reference implementations</h3>
+<ul>
+<li><strong><a href="https://github.com/Attestto/attestto-desktop">attestto-desktop</a></strong> — open-source citizen application (Electron + Vue). Implements IEAL claims via PAdES-LTA embedding, SQLCipher-backed vault at Storage axis values S1 and S2, Shamir 2-of-3 guardian recovery at Storage axis value S4, libp2p Kademlia mesh for evidence replication, and Solana anchoring as decentralized timestamp authority in lieu of a traditional TSA.</li>
+<li><strong><a href="https://github.com/Attestto/attestto-mobile">attestto-mobile</a></strong> — companion mobile application supplying Capture axis C1 and C2 attestations via Play Integrity API (Android) and App Attest (iOS)</li>
+</ul>
+<hr />
+<p><em>End of specification v0.1 Working Draft.</em></p>
+    <footer>
+      <p>Specification text licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>. Reference code, JSON Schemas, and examples licensed under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.</p>
+      <p>Working Draft v0.1 published 2026-07-01. Feedback via W3C Credentials Community Group, DIF working groups, or direct correspondence to the editors.</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IEAL — NIST SP 800-63-4 Crosswalk</title>
+  <meta name="description" content="Informative mapping of IEAL v0.1 axes and composite levels to controls in NIST SP 800-63-4. Not endorsed by NIST. Working Draft v0.1.1.">
+  <link rel="canonical" href="https://spec.attestto.com/ieal/crosswalks/nist-800-63/">
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    h4 { font-size: 1rem; margin-top: 1.25rem; margin-bottom: 0.4rem; color: var(--muted); }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: var(--code-bg);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-bottom: 1rem;
+      font-size: 0.85em;
+      line-height: 1.5;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: inherit;
+    }
+    blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { font-weight: 600; background: var(--code-bg); }
+    ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.3rem; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+    footer a { color: var(--muted); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="https://attestto.com">&larr; attestto.com</a> &nbsp;&middot;&nbsp;
+    <a class="back" href="/ieal/">IEAL v0.1</a> &nbsp;&middot;&nbsp;
+    <a class="back" href="/">All Specs</a>
+<h1 id="ieal-crosswalk-to-nist-sp-800-63-4">IEAL — Crosswalk to NIST SP 800-63-4</h1>
+<p><strong>Crosswalk version:</strong> 0.1 (Working Draft) <strong>Publication date:</strong> 2026-07-01 <strong>Canonical URL (planned):</strong> https://spec.attestto.com/ieal/crosswalks/nist-800-63 <strong>Editors:</strong> Eduardo Chongkan (Attestto) <strong>License:</strong> <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International (CC-BY 4.0)</a> <strong>Referenced specification:</strong> <a href="https://spec.attestto.com/ieal">IEAL v0.1</a> <strong>Referenced standard:</strong> <a href="https://pages.nist.gov/800-63-4/">NIST SP 800-63-4</a>, final publication dated 2025-07-31, DOI 10.6028/NIST.SP.800-63-4</p>
+<hr />
+<h2 id="non-endorsement-disclaimer">Non-endorsement disclaimer</h2>
+<p>This crosswalk is informational. It is authored by Attestto and describes how Attestto’s Identity Evidence Assurance Level (IEAL) specification relates to controls in the United States National Institute of Standards and Technology (NIST) Special Publication 800-63-4 series (Digital Identity Guidelines).</p>
+<p>This crosswalk <strong>is not endorsed by NIST</strong>. Attestto has not participated in the NIST 800-63-4 publication process (both the Initial Public Draft comment window of 2022-12-16 to 2023-04-14 and the Second Public Draft comment window of 2024-08-21 to 2024-10-08 are closed as of the publication date above).</p>
+<p>Nothing in this crosswalk constitutes a certification claim. Formal certification of an implementation against NIST SP 800-63-4 requires assessment by an authorized NIST-approved assessor. IEAL levels are Attestto’s specification and do not confer NIST Identity Assurance Level (IAL), Authenticator Assurance Level (AAL), or Federation Assurance Level (FAL) status.</p>
+<p>Where this crosswalk references specific sections of NIST SP 800-63-4, the reader is directed to the authoritative source at <a href="https://pages.nist.gov/800-63-4/">pages.nist.gov/800-63-4</a>.</p>
+<hr />
+<h2 id="table-of-contents">Table of contents</h2>
+<ol type="1">
+<li>Purpose</li>
+<li>NIST SP 800-63-4 document family overview</li>
+<li>The Subscriber-Controlled Wallet model</li>
+<li>Axis-by-axis crosswalk</li>
+<li>Composite IEAL to NIST assurance-level correspondence</li>
+<li>Consent semantics</li>
+<li>Carrier formats</li>
+<li>Where IEAL fills whitespace NIST leaves to policy</li>
+<li>Where NIST controls exceed IEAL scope</li>
+<li>Applying this crosswalk in procurement</li>
+<li>Change log</li>
+</ol>
+<p>References</p>
+<hr />
+<h2 id="purpose">1. Purpose</h2>
+<p>The IEAL specification defines a compositional model for identity evidence assurance across three axes (Capture, Algorithm, Storage) and combines them into composite levels L0 through L6. Many prospective adopters, particularly in regulated procurement contexts, ask a natural question:</p>
+<blockquote>
+<p>“How does IEAL relate to NIST SP 800-63-4?”</p>
+</blockquote>
+<p>This document answers that question. It maps each IEAL axis and composite level to the corresponding NIST controls and identifies the areas where IEAL extends NIST guidance to cover architectural concerns NIST intentionally leaves to implementer policy.</p>
+<p>The crosswalk does not modify either specification. IEAL and NIST SP 800-63-4 remain independently governed documents.</p>
+<hr />
+<h2 id="nist-sp-800-63-4-document-family-overview">2. NIST SP 800-63-4 document family overview</h2>
+<p>NIST SP 800-63-4 was finalized on 2025-07-31 and consists of a base document and three companion volumes. Section references throughout this crosswalk refer to the final publication.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Document</th>
+<th>Scope</th>
+<th>Canonical URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SP 800-63-4</strong> (base)</td>
+<td>Definitions, model, risk assessment, applicability</td>
+<td>https://pages.nist.gov/800-63-4/sp800-63.html</td>
+</tr>
+<tr>
+<td><strong>SP 800-63A-4</strong></td>
+<td>Enrollment and Identity Proofing (IAL)</td>
+<td>https://pages.nist.gov/800-63-4/sp800-63a.html</td>
+</tr>
+<tr>
+<td><strong>SP 800-63B-4</strong></td>
+<td>Authentication and Authenticator Management (AAL)</td>
+<td>https://pages.nist.gov/800-63-4/sp800-63b.html</td>
+</tr>
+<tr>
+<td><strong>SP 800-63C-4</strong></td>
+<td>Federation and Assertions (FAL)</td>
+<td>https://pages.nist.gov/800-63-4/sp800-63c.html</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Community engagement channels</strong> (informational, for adopters wishing to comment on future revisions):</p>
+<ul>
+<li>Source repository: <a href="https://github.com/usnistgov/800-63-4">github.com/usnistgov/800-63-4</a></li>
+<li>Mailbox: <code>dig-comments@nist.gov</code></li>
+<li>NIST ITL IAM program page: <a href="https://www.nist.gov/itl/applied-cybersecurity/special-publication-800-63">nist.gov/itl/applied-cybersecurity/special-publication-800-63</a></li>
+</ul>
+<hr />
+<h2 id="the-subscriber-controlled-wallet-model">3. The Subscriber-Controlled Wallet model</h2>
+<p>NIST SP 800-63-4 base §2.4 introduces a <strong>Subscriber-Controlled Wallet</strong> model (Figure 5) alongside the traditional identity-provider-mediated model. In the Subscriber-Controlled Wallet model:</p>
+<ul>
+<li>A <strong>credential service provider (CSP)</strong> acts as the issuer of attribute bundles</li>
+<li>The <strong>wallet</strong> (which may be on-device or a hosted cloud wallet) acts simultaneously as the identity provider and the holder of the attribute bundles</li>
+<li>A <strong>relying party (RP)</strong> receives presentations from the wallet and verifies them independently</li>
+</ul>
+<p>This is the W3C Verifiable Credentials three-party model, formally adopted into NIST vocabulary in the 2025-07-31 final publication.</p>
+<p>IEAL is designed to fit inside this model. The IEAL claim schema (IEAL v0.1 Section 8) is intended to be included in attribute bundles issued to a Subscriber-Controlled Wallet. IEAL classifies the assurance strength of the underlying identity evidence, not the wallet or the presentation protocol.</p>
+<p><strong>Consequence for procurement:</strong> an adopter that has selected NIST SP 800-63-4 as its identity-guidance baseline can require IEAL-classified evidence in the attribute bundles it issues or accepts without leaving the NIST model.</p>
+<hr />
+<h2 id="axis-by-axis-crosswalk">4. Axis-by-axis crosswalk</h2>
+<h3 id="capture-axis">4.1 Capture axis</h3>
+<p>The IEAL Capture axis grades the cryptographic attestation of the capture environment.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>IEAL Capture value</th>
+<th>Description (IEAL v0.1 §4)</th>
+<th>NIST 800-63-4 correspondence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>C0 — Untrusted client</strong></td>
+<td>No cryptographic attestation of the capture platform</td>
+<td>NIST 800-63A §4 permits unattested captures at IAL1 subject to other proofing controls. NIST does not grade capture-environment attestation independently.</td>
+</tr>
+<tr>
+<td><strong>C1 — Software-attested mobile</strong></td>
+<td>Platform-level attestation from OS vendor, bound to a session nonce</td>
+<td>Consistent with NIST 800-63B §3.2.4 (Attestation). NIST requires ≥112-bit signed attestations but treats attestation as an abstract concept and does not name Play Integrity or App Attest as products. WebAuthn attestation is normatively referenced.</td>
+</tr>
+<tr>
+<td><strong>C2 — Hardware-attested mobile</strong></td>
+<td>As C1, with the attestation bound to a hardware-protected key (StrongBox, Secure Enclave)</td>
+<td>Consistent with NIST 800-63B §§3.2.11 and 3.2.12 (hardware-protected key storage in TPM, TEE, or Secure Element). NIST does not require the capture platform to carry an attestation, but where an attestation is provided, the requirements for cryptographic strength apply.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Whitespace filled by IEAL:</strong> NIST 800-63-4 does not grade capture-environment attestation as an independent axis. IEAL provides the grading.</p>
+<h3 id="algorithm-axis">4.2 Algorithm axis</h3>
+<p>The IEAL Algorithm axis grades Presentation Attack Detection (PAD) strength.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>IEAL Algorithm value</th>
+<th>Description (IEAL v0.1 §5)</th>
+<th>NIST 800-63-4 correspondence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A0 — None</strong></td>
+<td>No PAD or liveness verification</td>
+<td>Below NIST biometric-verification controls</td>
+</tr>
+<tr>
+<td><strong>A1 — Active challenge (basic)</strong></td>
+<td>Scripted pose sequence, blink prompt, or similar, without additional anti-spoof measures</td>
+<td>Not sufficient for the normative PAD requirement in NIST 800-63A §3.13</td>
+</tr>
+<tr>
+<td><strong>A2 — Active challenge (hardened)</strong></td>
+<td>A1 plus randomized challenge, real eye-aspect-ratio blink detection, screen/moiré detection, and 3D head-pose estimation</td>
+<td>Represents an implementer’s good-faith effort toward the NIST 800-63A §3.13 PAD requirement but is not sufficient without formal ISO/IEC 30107-3 certification</td>
+</tr>
+<tr>
+<td><strong>A3 — PAD Level 1</strong></td>
+<td>ISO/IEC 30107-3 Level 1 PAD certification by an iBeta or NVLAP-accredited laboratory</td>
+<td>Consistent with the normative requirement in NIST 800-63A §3.13 (<code>ProofBios</code>), which requires conformance to ISO/IEC 30107-3:2023 with an IAPAR (Imposter Attack Presentation Accept Rate) below 0.07. A3 certification provides the pathway that satisfies this NIST requirement.</td>
+</tr>
+<tr>
+<td><strong>A4 — PAD Level 2</strong></td>
+<td>ISO/IEC 30107-3 Level 2 PAD certification by an iBeta or NVLAP-accredited laboratory</td>
+<td>Exceeds the minimum NIST 800-63A §3.13 requirement. Additional NIST controls apply: 800-63B §3.2.3.2 requires PAD <strong>SHALL</strong> for facial verification, <strong>SHOULD</strong> for iris and fingerprint. Voice-based biometric comparison is <strong>prohibited</strong> by NIST 800-63B §3.2.3.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Alignment:</strong> The IEAL Algorithm axis A3 and A4 values are aligned with the specific normative PAD requirement in NIST 800-63A §3.13. Implementers targeting NIST-aligned identity proofing at IAL2 with the Biometric verification pathway are required to reach at minimum A3.</p>
+<h3 id="storage-axis">4.3 Storage axis</h3>
+<p>The IEAL Storage axis grades where the subscriber-controlled witness resides and how it is protected.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>IEAL Storage value</th>
+<th>Description (IEAL v0.1 §6)</th>
+<th>NIST 800-63-4 correspondence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>S0 — None</strong></td>
+<td>No witness retained beyond the artifact</td>
+<td>NIST 800-63A does not require post-proofing witness retention in all cases. Depending on the identity-proofing pathway, retention may be required for IAL3 (on-site attended proofing with biometric sample retention).</td>
+</tr>
+<tr>
+<td><strong>S1 — OS-managed secret store</strong></td>
+<td>Key material or witness in Keychain, DPAPI, or Secret Service, with OS-mediated authorization</td>
+<td>Consistent with NIST 800-63B §3 authenticator-storage baseline for AAL1 and AAL2</td>
+</tr>
+<tr>
+<td><strong>S2 — Hardware-protected key store</strong></td>
+<td>Key material in TPM, TEE, Secure Enclave, StrongBox, or equivalent hardware-backed key store</td>
+<td>Required by NIST 800-63B §§3.2.11 and 3.2.12 for non-exportable private keys at AAL3. Implementations at S2 satisfy the NIST authenticator-storage requirement.</td>
+</tr>
+<tr>
+<td><strong>S3 — External hardware token</strong></td>
+<td>Key material on external hardware security token (FIDO2, smart card)</td>
+<td>Consistent with NIST 800-63B AAL3 cryptographic-hardware requirements. NIST 800-63B additionally requires that <strong>syncable authenticators SHALL NOT be used at AAL3</strong>. Implementations at S3 (external, non-syncable hardware) satisfy this constraint.</td>
+</tr>
+<tr>
+<td><strong>S4 — Multi-party recovery</strong></td>
+<td>Threshold multi-party approval (for example, Shamir 2-of-3) for witness release</td>
+<td>Not directly addressed by NIST 800-63-4. NIST 800-63B addresses authenticator management and recovery but does not require or grade threshold-based multi-party recovery constructions.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Whitespace filled by IEAL:</strong> NIST 800-63-4 does not grade the location of subscriber-controlled evidence storage as an independent axis, nor does it grade multi-party recovery constructions. IEAL provides both.</p>
+<p><strong>Consistency:</strong> Storage axis value S2 satisfies the specific NIST 800-63B non-exportable-private-key requirement at AAL3. Storage axis value S3 additionally satisfies the NIST prohibition on syncable authenticators at AAL3.</p>
+<hr />
+<h2 id="composite-ieal-to-nist-assurance-level-correspondence">5. Composite IEAL to NIST assurance-level correspondence</h2>
+<p>The following table shows the approximate correspondence between IEAL composite levels (IEAL v0.1 §7) and NIST assurance levels. This table is informational.</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Composite IEAL</th>
+<th>Capture</th>
+<th>Algorithm</th>
+<th>Storage</th>
+<th>Approximate NIST correspondence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L0</strong></td>
+<td>C0</td>
+<td>A0</td>
+<td>S0</td>
+<td>Below IAL1 and below AAL1</td>
+</tr>
+<tr>
+<td><strong>L1</strong></td>
+<td>C0</td>
+<td>A1</td>
+<td>S1</td>
+<td>Approximately IAL1 with AAL1 or AAL2 authenticator</td>
+</tr>
+<tr>
+<td><strong>L2</strong></td>
+<td>C0</td>
+<td>A2</td>
+<td>S2</td>
+<td>Between IAL1 and IAL2, with AAL2 authenticator</td>
+</tr>
+<tr>
+<td><strong>L3</strong></td>
+<td>C1 or C2</td>
+<td>A2</td>
+<td>S2</td>
+<td>Approaching IAL2. Capture attestation exceeds NIST minimum for IAL2; Algorithm axis A2 does not meet the ISO/IEC 30107-3 PAD normative requirement for the Biometric verification pathway. Suitable for the Non-Biometric or Digital Evidence pathways of NIST 800-63A §4.2.</td>
+</tr>
+<tr>
+<td><strong>L4</strong></td>
+<td>C1 or C2</td>
+<td>A3</td>
+<td>S2</td>
+<td><strong>IAL2 with the Biometric verification pathway satisfied.</strong> Storage axis S2 satisfies the AAL3 non-exportable-private-key requirement, though IAL2 does not require AAL3.</td>
+</tr>
+<tr>
+<td><strong>L5</strong></td>
+<td>C1 or C2</td>
+<td>A4</td>
+<td>S2</td>
+<td><strong>IAL2 with additional controls.</strong> Algorithm axis A4 exceeds the NIST 800-63A §3.13 PAD minimum. Storage axis S2 satisfies AAL3 storage.</td>
+</tr>
+<tr>
+<td><strong>L6</strong></td>
+<td>C2</td>
+<td>A4</td>
+<td>S2 required, S3 required for release, S4 required for multi-party operations</td>
+<td><strong>Subset of IAL3 controls.</strong> NIST 800-63A requires IAL3 to be an on-site attended proofing session with CSP retention of a biometric sample. IEAL L6 does not mandate on-site attendance and therefore does not fully satisfy IAL3. It does satisfy the strongest NIST 800-63B authenticator-storage constraints (AAL3, non-syncable, hardware-bound).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Caveat on IAL3:</strong> NIST 800-63A requires IAL3 to be an on-site attended proofing session. IEAL L6 permits remote proofing with hardware-attested mobile capture and multi-party co-signature. Implementers requiring formal IAL3 status must additionally satisfy the on-site attendance requirement, which IEAL does not preclude but does not itself provide.</p>
+<hr />
+<h2 id="consent-semantics">6. Consent semantics</h2>
+<p>NIST SP 800-63C §4.6.1.3 (Runtime Decision) requires that identity providers obtain positive confirmation from the subscriber before releasing attributes to a relying party, and prohibits conditioning the identity service on unrelated processing consent.</p>
+<p>IEAL treats per-event consent as normative for access to retained witnesses (IEAL v0.1 §14). Specifically, IEAL requires that:</p>
+<ul>
+<li>Witness plaintext MUST NOT be released without an explicit, per-event capability token issued by the subject</li>
+<li>Persistent share-by-default authorizations are non-conformant</li>
+</ul>
+<p><strong>Consistency with NIST:</strong> The IEAL per-event-consent requirement is consistent with NIST 800-63C §4.6.1.3 and extends it to cover access to retained biometric witnesses in Subscriber-Controlled Wallet architectures, a case that NIST §4.6.1.3 addresses generally but not specifically for retained biometric evidence.</p>
+<hr />
+<h2 id="carrier-formats">7. Carrier formats</h2>
+<p>NIST SP 800-63C §3.12.1 names the following attribute-bundle formats as acceptable for federation assertions:</p>
+<ul>
+<li>W3C Verifiable Credentials</li>
+<li>SD-JWT (Selective Disclosure JWT)</li>
+<li>ISO/IEC 18013-5 mDoc (mobile driving license)</li>
+</ul>
+<p>IEAL v0.1 §9 defines the carriers for IEAL claims. All three of the NIST-named formats are acceptable carriers for IEAL claims:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>NIST-named format</th>
+<th>IEAL carrier support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W3C Verifiable Credentials</td>
+<td>IEAL v0.1 §9.2</td>
+</tr>
+<tr>
+<td>SD-JWT</td>
+<td>IEAL v0.1 §9.2</td>
+</tr>
+<tr>
+<td>ISO/IEC 18013-5 mDoc</td>
+<td>Not explicitly listed in IEAL v0.1 §9.2 but permitted under the same subsection. Formal mDoc carrier profile deferred to a future revision.</td>
+</tr>
+</tbody>
+</table>
+<p>IEAL additionally permits embed-first carriers where the identity evidence is associated with an existing document container (PDF signature dictionary, C2PA manifest, XMP metadata). NIST 800-63-4 does not address embedded IEAL-equivalent claims in existing document containers directly, so the embed-first carrier pattern is an IEAL extension beyond NIST-named formats.</p>
+<hr />
+<h2 id="where-ieal-fills-whitespace-nist-leaves-to-policy">8. Where IEAL fills whitespace NIST leaves to policy</h2>
+<p>The following concerns are addressed by IEAL but not graded as independent axes by NIST SP 800-63-4:</p>
+<ul>
+<li><strong>Capture-environment attestation strength.</strong> NIST references attestation abstractly (800-63B §3.2.4) but does not grade capture-environment attestation. IEAL Capture axis grades it (C0, C1, C2).</li>
+<li><strong>Witness storage location.</strong> NIST specifies non-exportable key requirements at AAL3 (§§3.2.11, 3.2.12) but does not grade the storage location of retained biometric witnesses as an independent axis. IEAL Storage axis grades it (S0 through S3).</li>
+<li><strong>Multi-party recovery constructions.</strong> NIST addresses authenticator recovery (800-63B §4.5) but does not grade threshold-based multi-party recovery. IEAL Storage axis value S4 addresses this.</li>
+<li><strong>Per-event access control over retained biometric witnesses.</strong> NIST 800-63C §4.6.1.3 addresses per-event consent for attribute release generally. IEAL extends this to retained biometric witnesses specifically.</li>
+<li><strong>Session-based assurance composition.</strong> Not covered by NIST 800-63-4. IEAL v0.1 defers this to a future revision (IEAL v0.1 §1.3).</li>
+</ul>
+<p>These are the areas where an IEAL claim adds machine-verifiable detail beyond what a bare NIST IAL/AAL claim conveys.</p>
+<hr />
+<h2 id="where-nist-controls-exceed-ieal-scope">9. Where NIST controls exceed IEAL scope</h2>
+<p>The following NIST controls are out of scope for IEAL v0.1:</p>
+<ul>
+<li><strong>Enrollment procedures and identity resolution</strong> (800-63A §4). IEAL does not define how the identity claim was resolved to a real-world subject in the first place. It grades the evidence artifact once produced.</li>
+<li><strong>Federation protocol requirements</strong> (800-63C). IEAL claims are transported by carrier formats that federation protocols use; IEAL does not define federation protocols.</li>
+<li><strong>Session management</strong> (800-63B §5). IEAL v0.1 addresses single capture events, not authenticated session lifecycle.</li>
+<li><strong>Assertion protection and audience restriction</strong> (800-63C §5). Out of scope for IEAL.</li>
+<li><strong>Risk assessment methodology</strong> (NIST 800-63 base). NIST prescribes a risk-assessment process for selecting IAL/AAL/FAL targets. IEAL provides classification levels but does not prescribe the risk-assessment process.</li>
+<li><strong>Fraud and abuse controls</strong> (NIST 800-63A). IEAL does not define anti-fraud controls beyond the evidence classification.</li>
+</ul>
+<p>Implementers seeking NIST-aligned identity architectures should treat IEAL as an evidence-classification supplement, not a replacement for the NIST 800-63-4 controls above.</p>
+<hr />
+<h2 id="applying-this-crosswalk-in-procurement">10. Applying this crosswalk in procurement</h2>
+<p>For procurement authorities requiring NIST SP 800-63-4 alignment, this section provides illustrative guidance on how IEAL levels typically map to NIST pathway choices. <strong>Adopters must conduct their own risk assessment per NIST 800-63 base to select appropriate levels for their specific operations.</strong> Nothing in this section is a normative procurement template.</p>
+<p><strong>How IEAL levels typically map to NIST pathway choices</strong> (informational only):</p>
+<ul>
+<li>Artifacts supporting the <strong>NIST 800-63A Biometric verification pathway</strong> at IAL2 typically require IEAL <strong>L4 or higher</strong>, with Algorithm axis A3 or A4 satisfied by an implementation carrying current ISO/IEC 30107-3 certification from an NVLAP-accredited laboratory.</li>
+<li>Artifacts supporting the <strong>NIST 800-63A Non-Biometric or Digital Evidence pathways</strong> at IAL2 typically permit IEAL <strong>L3 or higher</strong>.</li>
+<li>Artifacts held under <strong>subject-controlled retention</strong> typically require Storage axis <strong>S2 or higher</strong>.</li>
+<li>Artifacts intended for <strong>notarial or fiduciary operations</strong> typically require IEAL <strong>L5 or L6</strong> with multi-party co-signature per Storage axis S4.</li>
+</ul>
+<p>The IEAL levels named above are illustrative examples of levels an adopter might choose. They are not a normative procurement template. Adopters bear full responsibility for confirming that their specific interpretation of NIST SP 800-63-4 aligns with their chosen IEAL levels and their risk profile. This crosswalk supports that analysis but does not conduct it.</p>
+<hr />
+<h2 id="change-log">11. Change log</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1</td>
+<td>2026-07-01</td>
+<td>Initial Working Draft. Anchored to NIST SP 800-63-4 final publication of 2025-07-31 (DOI 10.6028/NIST.SP.800-63-4).</td>
+</tr>
+<tr>
+<td>0.1.1</td>
+<td>2026-07-01</td>
+<td>Audit pass — soften A3 IAPAR alignment claim from “meets” to “provides the pathway that satisfies”; remove unverified section-number references (§4.3.3 for IAL3, §4.5 for 63B recovery, §3 for 63 base risk methodology, §3.10 for 63A fraud); rewrite §10 procurement clause from RFC 2119 SHALL-based template to explicit informational guidance to reduce risk of verbatim use.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="references">References</h2>
+<h3 id="normative-referenced-by-ieal-and-by-nist-800-63-4">Normative (referenced by IEAL and by NIST 800-63-4)</h3>
+<ul>
+<li><strong><a href="https://pages.nist.gov/800-63-4/">NIST SP 800-63-4</a></strong> — Digital Identity Guidelines, final 2025-07-31 (base + 800-63A + 800-63B + 800-63C)</li>
+<li><strong><a href="https://www.iso.org/standard/79520.html">ISO/IEC 30107-3:2023</a></strong> — Biometric presentation attack detection, Part 3</li>
+<li><strong><a href="https://www.w3.org/TR/vc-data-model-2.0/">W3C Verifiable Credentials Data Model 2.0</a></strong></li>
+<li><strong><a href="https://www.iso.org/standard/69084.html">ISO/IEC 18013-5</a></strong> — Mobile driving license (mDL)</li>
+<li><strong><a href="https://spec.attestto.com/ieal">IEAL v0.1</a></strong> — Identity Evidence Assurance Level specification</li>
+</ul>
+<h3 id="informative">Informative</h3>
+<ul>
+<li><strong><a href="https://github.com/usnistgov/800-63-4">NIST SP 800-63-4 GitHub source</a></strong> — canonical source repository</li>
+<li><strong><a href="https://csrc.nist.gov/pubs/sp/800/63/4/final">NIST CSRC 800-63-4 publication record</a></strong> — publication metadata</li>
+<li><strong><a href="https://www.nist.gov/itl/applied-cybersecurity/special-publication-800-63">NIST ITL Identity and Access Management program</a></strong> — engagement channel</li>
+<li><strong><a href="https://w3c-ccg.github.io/nist-dig-comments/">W3C CCG NIST 800-63 comment aggregate</a></strong> — community-collected comments from a prior revision cycle (informational; provided for adopters interested in the standards-community engagement history)</li>
+<li><strong><a href="https://www.ibeta.com/iso-pad/">iBeta Quality Assurance</a></strong> — NVLAP-accredited PAD testing laboratory public register (for ISO/IEC 30107-3 vendor verification)</li>
+</ul>
+<hr />
+<p><em>End of crosswalk v0.1 Working Draft.</em></p>
+    <footer>
+      <p>Crosswalk text licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>. This crosswalk is informative and not endorsed by NIST. Refer to <a href="https://pages.nist.gov/800-63-4/">pages.nist.gov/800-63-4</a> for the authoritative NIST publication.</p>
+      <p>Working Draft v0.1.1 published 2026-07-01. Companion specification: <a href="/ieal/">IEAL v0.1</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>

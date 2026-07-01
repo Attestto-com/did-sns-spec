@@ -1,8 +1,22 @@
+# Attestto Specifications
+
+> Identity standards and open specifications by the Attestto Identity Standards Group. Hosted at [spec.attestto.com](https://spec.attestto.com). Developed by [Attestto Open](https://attestto.org).
+
+## Specifications hosted here
+
+| Specification | Path | Status |
+|---|---|---|
+| `did:sns` — DID Method for Solana Name Service | [/did-sns/](https://spec.attestto.com/did-sns/) | Provisional |
+| IEAL — Identity Evidence Assurance Level | [/ieal/](https://spec.attestto.com/ieal/) | Working Draft v0.1 |
+| IEAL to NIST SP 800-63-4 Crosswalk | [/ieal/crosswalks/nist-800-63/](https://spec.attestto.com/ieal/crosswalks/nist-800-63/) | Informative, not endorsed by NIST |
+
+## IEAL in one paragraph
+
+IEAL classifies identity evidence artifacts across three independent axes — Capture (device attestation), Algorithm (presentation-attack detection strength), and Storage (key material protection) — and composes them into a single level L0 through L6. IEAL is designed to fit inside the NIST SP 800-63-4 Subscriber-Controlled Wallet model (§2.4). It is carrier-agnostic: IEAL claims may be carried in W3C Verifiable Credentials, COSE-signed objects, PDF signature dictionaries, C2PA manifests, or a standalone envelope. Reference the axis-by-axis NIST 800-63-4 crosswalk for the formal mapping.
+
 # did:sns — DID Method Specification
 
 > Alias-anchored W3C Decentralized Identifiers for cross-border interoperability, privacy, and compliance. Binds W3C DIDs to human-readable `.sol` Solana Name Service domains.
-
-Published at [spec.attestto.com](https://spec.attestto.com). Developed by [Attestto Open](https://attestto.org).
 
 ## What did:sns is
 
