@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VCP v0.1 — Verifiable Content Provenance</title>
+  <meta name="description" content="VCP embed-first content envelope specification. A signed metadata block carried inside PDF, JPEG, or as a sidecar for any host file. Working Draft v0.1.">
+  <link rel="canonical" href="https://spec.attestto.com/vcp/">
+  <style>
+    :root { --fg:#1a1a2e; --bg:#fdfdfe; --accent:#4f46e5; --muted:#64748b; --border:#e2e8f0; --code-bg:#f1f5f9; --max-w:52rem; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:var(--fg); background:var(--bg); line-height:1.7; padding:3rem 1.5rem; }
+    .container { max-width:var(--max-w); margin:0 auto; }
+    h1 { font-size:2rem; margin-bottom:0.25rem; }
+    h2 { font-size:1.35rem; margin-top:2.5rem; margin-bottom:0.75rem; border-bottom:1px solid var(--border); padding-bottom:0.4rem; }
+    h3 { font-size:1.1rem; margin-top:1.5rem; margin-bottom:0.5rem; }
+    h4 { font-size:1rem; margin-top:1.25rem; margin-bottom:0.4rem; color:var(--muted); }
+    p { margin-bottom:1rem; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    code { font-family:'SF Mono','Fira Code','Consolas',monospace; background:var(--code-bg); padding:0.15em 0.4em; border-radius:4px; font-size:0.9em; }
+    pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin-bottom:1rem; font-size:0.85em; line-height:1.5; }
+    pre code { background:none; padding:0; font-size:inherit; }
+    blockquote { border-left:3px solid var(--accent); padding-left:1rem; color:var(--muted); margin-bottom:1rem; font-style:italic; }
+    .subtitle { color:var(--muted); font-size:1rem; margin-bottom:2rem; }
+    table { width:100%; border-collapse:collapse; margin-bottom:1.5rem; font-size:0.9rem; }
+    th, td { text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border); vertical-align:top; }
+    th { font-weight:600; background:var(--code-bg); }
+    ul, ol { margin-bottom:1rem; padding-left:1.5rem; }
+    li { margin-bottom:0.3rem; }
+    hr { border:none; border-top:1px solid var(--border); margin:2rem 0; }
+    .back { display:inline-block; margin-bottom:1.5rem; font-size:0.85rem; }
+    footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border); color:var(--muted); font-size:0.8rem; }
+    footer a { color:var(--muted); text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="https://attestto.com">&larr; attestto.com</a> &nbsp;&middot;&nbsp;
+    <a class="back" href="/">All Specs</a>
+<h1 id="vcp-verifiable-content-provenance">VCP — Verifiable Content Provenance</h1>
+<p><strong>Specification version:</strong> 0.1 (Working Draft) <strong>Publication date:</strong> 2026-07-01 <strong>Canonical URL (planned):</strong> https://spec.attestto.com/vcp <strong>Editors:</strong> Eduardo Chongkan (Attestto) <strong>License:</strong> Specification text is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International (CC-BY 4.0)</a>. Reference code, JSON Schemas, and examples are licensed under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>. <strong>Reference implementation:</strong> <a href="https://github.com/Attestto-com/vcp-cli">github.com/Attestto-com/vcp-cli</a> (<code>@attestto/vcp</code> on npm)</p>
+<hr />
+<h2 id="abstract">Abstract</h2>
+<p>This specification defines the <strong>Verifiable Content Provenance (VCP)</strong> container: a compact, embed-first metadata block that carries an issuer DID, a content-type declaration, a canonical content hash, an optional recipient DID, an optional profile identifier, and an EdDSA signature over the canonical JSON encoding of the block. The block is designed to travel <strong>inside</strong> host file formats (PDF, JPEG, ISOBMFF containers, and others) so that legacy readers ignore it and only VCP-aware tools verify or act on it.</p>
+<p>VCP is deliberately narrow. It is not a rights-expression language, not a DRM system, and not a licensing framework. It answers a single question: <strong>for this file, who issued it, when, to whom, and has it been modified since?</strong></p>
+<p>VCP is the natural carrier for <a href="https://spec.attestto.com/ieal">IEAL</a> identity-evidence claims and for domain-specific profiles (legal-document, medical-record, ID-evidence, media). This v0.1 draft specifies only the base container. Profiles are separate documents.</p>
+<hr />
+<h2 id="status-of-this-document">Status of This Document</h2>
+<p>This is a <strong>Working Draft (v0.1)</strong> published for public review, peer critique, and standards-body engagement. It is not a final specification. Breaking changes may occur before v1.0.</p>
+<p>Feedback is welcomed through:</p>
+<ul>
+<li>GitHub Issues on <a href="https://github.com/Attestto-com/vcp-cli">github.com/Attestto-com/vcp-cli</a></li>
+<li>W3C Credentials Community Group (CCG) mailing list</li>
+<li>Decentralized Identity Foundation (DIF) working groups</li>
+<li>Direct correspondence to the editors</li>
+</ul>
+<p><strong>Relationship to other Attestto specifications:</strong></p>
+<ul>
+<li><strong><a href="https://spec.attestto.com/ieal">IEAL</a></strong> — Identity Evidence Assurance Level; VCP carries IEAL claims in the optional <code>ieal</code> metadata field</li>
+<li><strong><a href="https://spec.attestto.com/did-pki">did:pki</a></strong> — DID method for CA-hierarchy trust anchors; a valid issuer method for VCP envelopes</li>
+<li><strong><a href="https://spec.attestto.com/did-sns">did:sns</a></strong> — DID method for Solana Name Service bindings; a valid issuer method for VCP envelopes</li>
+</ul>
+<hr />
+<h2 id="introduction">1. Introduction</h2>
+<h3 id="motivation">1.1 Motivation</h3>
+<p>Content provenance is currently addressed by format-specific standards: PAdES for PDF, C2PA for images and video, XMP for photographic metadata, JOSE for JSON payloads. Each solves the provenance question inside one carrier. Cross-carrier tooling has to re-implement signing, verification, and metadata for every format, and profile-level concerns (what fields matter for a legal document versus a captured biometric versus a music track) get mixed into the base carrier spec.</p>
+<p>VCP factors the container mechanics out from the profile concerns:</p>
+<ul>
+<li>One base envelope. Same fields regardless of host format.</li>
+<li>One canonicalization rule. Same signing algorithm regardless of host format.</li>
+<li>A carrier layer maps the envelope into each host format’s embed slot.</li>
+<li>Profiles layer domain-specific required fields on top of the base envelope.</li>
+</ul>
+<p>The result is that a legal document, a photograph of an ID, an audio recording, and a plain-text file can all carry the same shape of envelope with the same verification path, and that adding a new host format is a carrier-only change.</p>
+<h3 id="terminology">1.2 Terminology</h3>
+<p>The terms <strong>MUST</strong>, <strong>MUST NOT</strong>, <strong>REQUIRED</strong>, <strong>SHALL</strong>, <strong>SHALL NOT</strong>, <strong>SHOULD</strong>, <strong>SHOULD NOT</strong>, <strong>RECOMMENDED</strong>, <strong>MAY</strong>, and <strong>OPTIONAL</strong> in this document are to be interpreted as described in <a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a> and <a href="https://www.rfc-editor.org/rfc/rfc8174">RFC 8174</a> when, and only when, they appear in all capitals.</p>
+<ul>
+<li><strong>Envelope</strong> — a JSON object of the shape defined in §3 that carries the metadata block and its signature.</li>
+<li><strong>Metadata block</strong> — the <code>metadata</code> field of the envelope; the input to the canonicalization and signing algorithm.</li>
+<li><strong>Carrier</strong> — a specification of how to embed a VCP envelope inside a specific host file format.</li>
+<li><strong>Host file</strong> — the file into which a VCP envelope is embedded.</li>
+<li><strong>Profile</strong> — a supplementary specification identified by URI that adds required fields to the metadata block for a specific domain of use.</li>
+</ul>
+<hr />
+<h2 id="envelope-structure">2. Envelope structure</h2>
+<p>A VCP envelope is a JSON object with exactly two top-level fields: <code>metadata</code> and <code>signature</code>.</p>
+<pre class="json"><code>{
+  &quot;metadata&quot;: { ... },
+  &quot;signature&quot;: {
+    &quot;alg&quot;: &quot;EdDSA&quot;,
+    &quot;value&quot;: &quot;&lt;base64url signature&gt;&quot;
+  }
+}</code></pre>
+<h3 id="metadata-block">2.1 Metadata block</h3>
+<p>The metadata block MUST include the following fields:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spec</code></td>
+<td>string (URI)</td>
+<td>MUST equal <code>https://spec.attestto.com/vcp/</code>.</td>
+</tr>
+<tr>
+<td><code>spec_version</code></td>
+<td>string</td>
+<td>MUST equal <code>0.1</code> for envelopes conforming to this document.</td>
+</tr>
+<tr>
+<td><code>issuer</code></td>
+<td>string (DID)</td>
+<td>The DID of the entity that signed this envelope.</td>
+</tr>
+<tr>
+<td><code>content_type</code></td>
+<td>string</td>
+<td>The IANA Media Type of the host file (e.g. <code>application/pdf</code>, <code>image/jpeg</code>).</td>
+</tr>
+<tr>
+<td><code>content_hash</code></td>
+<td>string</td>
+<td>The hexadecimal SHA-256 hash of the host file, computed per the <code>hash_scope</code> rule.</td>
+</tr>
+<tr>
+<td><code>hash_scope</code></td>
+<td>string</td>
+<td>Either <code>host-file-minus-vcp-block</code> (embed carriers) or <code>host-file-unmodified</code> (sidecar carrier).</td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td>string</td>
+<td>RFC 3339 timestamp of signature creation.</td>
+</tr>
+</tbody>
+</table>
+<p>The metadata block MAY include the following fields:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subject</code></td>
+<td>string (DID)</td>
+<td>The DID of the intended recipient or subject of the content.</td>
+</tr>
+<tr>
+<td><code>profile</code></td>
+<td>string (URI)</td>
+<td>Identifier of a profile that layers additional required fields on this envelope.</td>
+</tr>
+<tr>
+<td><code>ieal</code></td>
+<td>object</td>
+<td>An <a href="https://spec.attestto.com/ieal">IEAL v0.1</a> claim describing the assurance level of the identity evidence contained.</td>
+</tr>
+</tbody>
+</table>
+<p>Implementations MUST reject envelopes containing unknown top-level metadata fields at the same time they reject unknown <code>spec_version</code> values. This forces additive changes into a new <code>spec_version</code> and prevents ambiguity.</p>
+<h3 id="signature-block">2.2 Signature block</h3>
+<p>The signature block MUST include:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>alg</code></td>
+<td>string</td>
+<td>Signature algorithm identifier. For v0.1 the only permitted value is <code>EdDSA</code>.</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>string</td>
+<td>The base64url-encoded raw signature output.</td>
+</tr>
+</tbody>
+</table>
+<p>The signature is computed over the UTF-8 bytes of the canonical JSON serialization (<a href="https://www.rfc-editor.org/rfc/rfc8785">JCS RFC 8785</a>) of the <code>metadata</code> object. Verification recomputes the canonicalization and calls the signature algorithm’s verify primitive with the issuer’s resolved public key.</p>
+<p>Post-quantum hybrid signature suites (e.g. ML-DSA + Ed25519) are out of scope for v0.1 and will be added in a future version with an expanded <code>alg</code> registry.</p>
+<hr />
+<h2 id="canonicalization">3. Canonicalization</h2>
+<p>Canonicalization has two layers.</p>
+<h3 id="metadata-canonicalization">3.1 Metadata canonicalization</h3>
+<p>The metadata block is serialized using JCS (<a href="https://www.rfc-editor.org/rfc/rfc8785">RFC 8785</a>) prior to signing. The signature is computed over the UTF-8 bytes of the JCS output.</p>
+<h3 id="content-canonicalization">3.2 Content canonicalization</h3>
+<p>The <code>content_hash</code> field commits to a canonical representation of the host file. Two <code>hash_scope</code> values are defined:</p>
+<ul>
+<li><strong><code>host-file-minus-vcp-block</code></strong> — the host file bytes with the VCP-owned embed region removed per the carrier’s rules. Used by all embed carriers.</li>
+<li><strong><code>host-file-unmodified</code></strong> — the host file bytes as-is. Used only by the sidecar carrier where the host file is not modified.</li>
+</ul>
+<p>Each carrier specification MUST define precisely which byte range is treated as “the VCP-owned embed region” and how to remove it. The removal MUST be deterministic — two implementations MUST arrive at the same removed representation given the same input.</p>
+<hr />
+<h2 id="carriers-v0.1">4. Carriers (v0.1)</h2>
+<p>This section specifies three carriers. Additional carriers are the subject of follow-on specifications.</p>
+<h3 id="sidecar">4.1 Sidecar</h3>
+<ul>
+<li><strong>Applicability:</strong> Any host file type.</li>
+<li><strong>Embed slot:</strong> External file at <code>&lt;host-file&gt;.vcp.json</code> next to the host file, sharing filename stem.</li>
+<li><strong><code>hash_scope</code>:</strong> MUST be <code>host-file-unmodified</code>.</li>
+<li><strong>Serialization:</strong> The envelope is written as a pretty-printed JSON document. The exact byte layout of the sidecar is not signed and MAY vary between implementations.</li>
+<li><strong>Interoperability note:</strong> The sidecar carrier provides no protection against separation. When the host file is transported without its sidecar (email attachment forwards, chat sharing), verification is impossible. Implementations SHOULD warn users about this.</li>
+</ul>
+<h3 id="pdf-v0.1-pattern">4.2 PDF (v0.1 pattern)</h3>
+<ul>
+<li><strong>Applicability:</strong> Files with a <code>%PDF-</code> magic prefix.</li>
+<li><strong>Embed slot:</strong> A trailer block placed after the final <code>%%EOF</code>, delimited by the fixed strings <code>\n%%vcp:begin\n</code> and <code>\n%%vcp:end\n</code>. The envelope is base64url-encoded (using the URL-safe alphabet without padding) between the delimiters.</li>
+<li><strong><code>hash_scope</code>:</strong> MUST be <code>host-file-minus-vcp-block</code>.</li>
+<li><strong>Removal rule:</strong> The signed hash is computed over the host file with the byte range starting at the <code>\n%%vcp:begin\n</code> prefix and ending after the <code>\n%%vcp:end\n</code> suffix removed. All other bytes, including the original <code>%%EOF</code> and any legacy trailer content, MUST be preserved verbatim.</li>
+<li><strong>Backward compatibility:</strong> PDF readers stop parsing at <code>%%EOF</code>. Trailing bytes are ignored. This carrier is compatible with every conforming PDF reader that we have tested.</li>
+<li><strong>Non-goal:</strong> This carrier is NOT a PAdES signature. It does not populate the PDF signature dictionary and will not be recognized by PDF readers as a document signature. A separate <code>pdf-pades</code> carrier that integrates with the PDF <code>/Sig</code> field and <code>/ByteRange</code> mechanism is planned for a future revision.</li>
+</ul>
+<h3 id="jpeg">4.3 JPEG</h3>
+<ul>
+<li><strong>Applicability:</strong> Files that begin with the JPEG SOI marker (<code>0xFF 0xD8</code>).</li>
+<li><strong>Embed slot:</strong> A JPEG APP1 segment (marker <code>0xFF 0xE1</code>) whose payload begins with the XMP namespace identifier <code>http://ns.adobe.com/xap/1.0/\x00</code> followed by an XMP packet containing a <code>vcp:envelope</code> element in the namespace <code>https://spec.attestto.com/vcp/v1</code>.</li>
+<li><strong>Envelope encoding:</strong> The envelope is JCS-canonicalized, then base64url-encoded (URL-safe alphabet without padding), then placed as the text content of the <code>vcp:envelope</code> element.</li>
+<li><strong><code>hash_scope</code>:</strong> MUST be <code>host-file-minus-vcp-block</code>.</li>
+<li><strong>Removal rule:</strong> The signed hash is computed over the host file with all APP1 segments containing a <code>vcp:envelope</code> element removed. Non-VCP APP1 segments (JFIF, EXIF, non-VCP XMP) MUST be preserved.</li>
+<li><strong>Insertion location:</strong> The VCP APP1 segment is inserted immediately after the SOI marker. Implementations MUST NOT rely on the segment appearing at a specific position other than “after SOI, before SOS”.</li>
+<li><strong>Backward compatibility:</strong> JPEG readers ignore unknown XMP namespaces. Image rendering is unaffected.</li>
+</ul>
+<hr />
+<h2 id="did-methods">5. DID methods</h2>
+<p>The <code>issuer</code> and <code>subject</code> fields carry DIDs. Verifiers MUST support at least the <code>did:key</code> method for interoperability testing. Additional methods MAY be supported.</p>
+<h3 id="didkey-mandatory-for-verifiers">5.1 did:key (mandatory for verifiers)</h3>
+<p>The <code>did:key</code> method encodes an Ed25519 public key directly in the identifier. No external resolution is required. This is the minimum bar for VCP interoperability testing and is REQUIRED to be supported by all verifiers.</p>
+<h3 id="other-methods-optional">5.2 Other methods (optional)</h3>
+<p>Verifiers MAY support other DID methods including <code>did:pki</code>, <code>did:sns</code>, <code>did:web</code>, <code>did:webvh</code>, <code>did:jwk</code>. Resolution of these methods requires either a bundled resolver or the <a href="https://dev.uniresolver.io/">DIF Universal Resolver</a> HTTP interface. If resolution fails, the verifier MUST report a resolution failure distinctly from a signature verification failure.</p>
+<hr />
+<h2 id="profiles">6. Profiles</h2>
+<p>A profile is a supplementary specification identified by URI in the <code>profile</code> metadata field. Profiles layer domain-specific required and optional fields on top of the base envelope. Profiles MUST NOT contradict the base specification.</p>
+<p>Example profiles under discussion (each will be published as a separate document):</p>
+<ul>
+<li><code>https://spec.attestto.com/vcp/profiles/id-evidence/v1</code> — required IEAL claim, subject DID, and biometric-metadata pointer.</li>
+<li><code>https://spec.attestto.com/vcp/profiles/legal-doc/v1</code> — required jurisdiction, counterparty DIDs, and signed-by-signatures block.</li>
+<li><code>https://spec.attestto.com/vcp/profiles/medical-record/v1</code> — required consent scope and retention hint.</li>
+</ul>
+<p>An envelope MAY omit the <code>profile</code> field, in which case it is a base envelope and any additional metadata fields are informational.</p>
+<hr />
+<h2 id="conformance">7. Conformance</h2>
+<h3 id="signer-conformance">7.1 Signer conformance</h3>
+<p>A conforming signer:</p>
+<ol type="1">
+<li>MUST produce envelopes whose <code>metadata</code> object contains all required fields in §2.1.</li>
+<li>MUST canonicalize the metadata block per §3.1 before signing.</li>
+<li>MUST use one of the algorithms registered in §2.2.</li>
+<li>MUST embed the resulting envelope using one of the carriers specified in §4 or a carrier from a subsequent specification.</li>
+<li>SHOULD ensure that re-signing a previously-signed host file replaces the prior VCP envelope rather than compounding embed blocks.</li>
+</ol>
+<h3 id="verifier-conformance">7.2 Verifier conformance</h3>
+<p>A conforming verifier:</p>
+<ol type="1">
+<li>MUST reject envelopes with unknown top-level metadata fields.</li>
+<li>MUST reject envelopes whose <code>spec_version</code> is not recognized.</li>
+<li>MUST recompute the content hash per the declared <code>hash_scope</code> and reject on mismatch.</li>
+<li>MUST support at least the <code>did:key</code> method (§5.1).</li>
+<li>MUST distinguish DID-resolution failure from signature verification failure in its output.</li>
+<li>MAY warn on the sidecar-separation risk per §4.1.</li>
+</ol>
+<hr />
+<h2 id="security-considerations">8. Security considerations</h2>
+<h3 id="threat-model">8.1 Threat model</h3>
+<p>VCP defends against:</p>
+<ul>
+<li>Tampering with the host file content after signing.</li>
+<li>Forgery of the issuer DID by an attacker without the issuer’s private key.</li>
+<li>Substitution of one signed file for another when both are wrapped as sidecars (the <code>content_hash</code> binds the sidecar to a specific host file).</li>
+</ul>
+<p>VCP does NOT defend against:</p>
+<ul>
+<li>Compromise of the issuer’s private key. Key rotation is the issuer’s responsibility.</li>
+<li>Downgrade attacks in which a signed file’s VCP envelope is stripped, producing a file that looks pristine to VCP-unaware readers. Applications that depend on the presence of an envelope MUST verify presence, not merely validity.</li>
+<li>Content replacement in the sidecar carrier when the host file is transported without its sidecar (see §4.1).</li>
+</ul>
+<h3 id="algorithm-agility">8.2 Algorithm agility</h3>
+<p>VCP v0.1 supports exactly one signature algorithm (<code>EdDSA</code>). This is intentional for the working-draft phase. A future revision will introduce an algorithm registry with hybrid post-quantum options. Envelopes signed under v0.1 will be verifiable indefinitely under the algorithm they were signed with; the registry addition will not invalidate existing signatures.</p>
+<h3 id="confidentiality">8.3 Confidentiality</h3>
+<p>VCP v0.1 does not encrypt the host file. The envelope is a plaintext signed metadata block. Confidentiality of the content is out of scope for v0.1. A future revision will add a standalone <code>.vcp</code> envelope carrier with an encrypted payload for use cases where the content itself must be access-controlled.</p>
+<hr />
+<h2 id="privacy-considerations">9. Privacy considerations</h2>
+<p>VCP envelopes reveal:</p>
+<ul>
+<li>The issuer DID.</li>
+<li>The subject DID, if present.</li>
+<li>The signature timestamp.</li>
+<li>Any values placed in the metadata block by the signer, including profile fields.</li>
+</ul>
+<p>Applications SHOULD NOT include personally identifiable information in the metadata block. Selective disclosure of subject attributes is a profile concern and SHOULD be handled by pointing to an SD-JWT or verifiable credential elsewhere rather than by embedding attribute values in the envelope.</p>
+<p>Pairwise DIDs ([[pairwise-identifiers pattern from W3C VC-DATA-MODEL 2.0 §8.10]]) SHOULD be used for <code>subject</code> when the issuer-subject relationship should not be correlatable across contexts.</p>
+<hr />
+<h2 id="change-log">10. Change log</h2>
+<ul>
+<li><strong>v0.1 (2026-07-01)</strong> — Initial Working Draft. Sidecar, PDF (trailer), and JPEG (XMP) carriers. did:key and did:pki (opaque) support. EdDSA signature only.</li>
+</ul>
+<hr />
+<h2 id="references">References</h2>
+<h3 id="normative">Normative</h3>
+<ul>
+<li><a href="https://www.rfc-editor.org/rfc/rfc2119">RFC 2119</a> — Key words for use in RFCs to Indicate Requirement Levels</li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc8174">RFC 8174</a> — Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc8785">RFC 8785</a> — JSON Canonicalization Scheme (JCS)</li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc3339">RFC 3339</a> — Date and Time on the Internet: Timestamps</li>
+<li><a href="https://www.w3.org/TR/did-core/">W3C DID Core 1.0</a> — Decentralized Identifiers</li>
+<li><a href="https://w3c-ccg.github.io/did-method-key/">W3C did:key</a> — did:key Method</li>
+<li><a href="https://www.iso.org/standard/51502.html">ISO 32000-1</a> — PDF 1.7 (referenced for host format)</li>
+<li><a href="https://www.iso.org/standard/18902.html">ISO/IEC 10918-1</a> — JPEG (referenced for host format)</li>
+<li><a href="https://www.iso.org/standard/57421.html">ISO 16684-1</a> — XMP (referenced for JPEG carrier)</li>
+</ul>
+<h3 id="informative">Informative</h3>
+<ul>
+<li><a href="https://spec.attestto.com/ieal">IEAL v0.1 Working Draft</a> — Identity Evidence Assurance Level</li>
+<li><a href="https://spec.attestto.com/did-pki">did:pki v0.1 Working Draft</a> — DID method for CA-hierarchy trust anchors</li>
+<li><a href="https://spec.attestto.com/did-sns">did:sns</a> — DID method for Solana Name Service</li>
+<li><a href="https://c2pa.org/specifications/specifications/1.4/index.html">C2PA v1.4</a> — Coalition for Content Provenance and Authenticity (parallel effort; VCP is intentionally narrower)</li>
+<li><a href="https://www.etsi.org/deliver/etsi_en/319100_319199/31914201/">PAdES</a> — ETSI EN 319 142-1 PDF Advanced Electronic Signatures (planned alternative PDF carrier)</li>
+<li><a href="https://www.etsi.org/deliver/etsi_en/319100_319199/31913201/">ETSI EN 319 132</a> — XAdES (for reference)</li>
+</ul>
+<h3 id="reference-implementation">Reference implementation</h3>
+<ul>
+<li><a href="https://github.com/Attestto-com/vcp-cli"><code>@attestto/vcp</code> CLI</a> — Node.js reference implementation of this specification. Implements all three v0.1 carriers, <code>did:key</code> verifier, and <code>did:pki</code> signer (verifier requires supplied public key pending resolver publication).</li>
+</ul>
+    <footer>
+      <p>Specification text licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>. Reference code, JSON Schemas, and examples licensed under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.</p>
+      <p>Working Draft v0.1 published 2026-07-01. Reference implementation: <a href="https://github.com/Attestto-com/vcp-cli">github.com/Attestto-com/vcp-cli</a>. Feedback via W3C CCG, DIF, or direct correspondence to the editors.</p>
+    </footer>
+  </div>
+</body>
+</html>

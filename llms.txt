@@ -9,6 +9,11 @@
 | `did:sns` — DID Method for Solana Name Service | [/did-sns/](https://spec.attestto.com/did-sns/) | Provisional |
 | IEAL — Identity Evidence Assurance Level | [/ieal/](https://spec.attestto.com/ieal/) | Working Draft v0.1 |
 | IEAL to NIST SP 800-63-4 Crosswalk | [/ieal/crosswalks/nist-800-63/](https://spec.attestto.com/ieal/crosswalks/nist-800-63/) | Informative, not endorsed by NIST |
+| VCP — Verifiable Content Provenance | [/vcp/](https://spec.attestto.com/vcp/) | Working Draft v0.1 |
+
+## VCP in one paragraph
+
+VCP is an embed-first content-envelope specification: a signed metadata block carried inside PDF, JPEG, or a sidecar file that binds an issuer DID, a canonical content hash, a timestamp, and an optional IEAL claim to any host file. Legacy readers ignore the block; VCP-aware tools verify it. Reference implementation in `@attestto/vcp` at [github.com/Attestto-com/vcp-cli](https://github.com/Attestto-com/vcp-cli). VCP is intentionally narrow: it answers "who issued this, when, to whom, and has it been modified" and defers rights expression, licensing, and access control to profiles or complementary specifications.
 
 ## IEAL in one paragraph
 
