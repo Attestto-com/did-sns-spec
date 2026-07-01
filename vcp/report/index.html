@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VCP v0.1 — Implementation Report</title>
+  <meta name="description" content="Implementation Report for VCP v0.1 Working Draft. Maps each normative section of the specification to reference-implementation tests in @attestto/vcp.">
+  <link rel="canonical" href="https://spec.attestto.com/vcp/report/">
+  <style>
+    :root {
+      --fg: #1a1a2e;
+      --bg: #fdfdfe;
+      --accent: #4f46e5;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --pass: #16a34a;
+      --gap: #d97706;
+      --max-w: 52rem;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--fg);
+      background: var(--bg);
+      line-height: 1.7;
+      padding: 3rem 1.5rem;
+    }
+    .container { max-width: var(--max-w); margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: var(--code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 2rem; }
+    .pass { color: var(--pass); font-weight: 600; }
+    .gap { color: var(--gap); font-weight: 600; }
+    .summary-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .gap-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { font-weight: 600; background: var(--code-bg); }
+    td.result { text-align: center; white-space: nowrap; }
+    ul { margin-bottom: 1rem; padding-left: 1.5rem; }
+    li { margin-bottom: 0.35rem; }
+    .back { display: inline-block; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+    footer a { color: var(--muted); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back" href="https://attestto.com">&larr; attestto.com</a> &nbsp;&middot;&nbsp;
+    <a class="back" href="../">VCP v0.1</a> &nbsp;&middot;&nbsp;
+    <a class="back" href="/">All Specs</a>
+    <h1>Implementation Report</h1>
+    <p class="subtitle">VCP v0.1 Working Draft &mdash; <code>@attestto/vcp</code> Reference Implementation</p>
+
+    <div class="summary-box">
+      <span class="pass">8 tests passed</span> &middot; 0 failed &middot; 3 carriers + tamper detection + idempotency + keygen
+    </div>
+
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Specification</td><td><a href="../">VCP v0.1 Working Draft</a></td></tr>
+      <tr><td>Implementer</td><td><a href="https://attestto.com">Attestto</a></td></tr>
+      <tr><td>Implementation</td><td><a href="https://github.com/Attestto-com/vcp-cli"><code>@attestto/vcp</code></a> (Node.js CLI, MIT/Apache-2.0)</td></tr>
+      <tr><td>Language</td><td>JavaScript (Node.js &ge; 20)</td></tr>
+      <tr><td>Cryptography</td><td><code>@noble/curves</code> (Ed25519), <code>@noble/hashes</code> (SHA-256), <code>canonicalize</code> (JCS RFC 8785)</td></tr>
+      <tr><td>Report Date</td><td>2026-07-01</td></tr>
+      <tr><td>Implementation Count</td><td>1 (additional implementations invited)</td></tr>
+    </table>
+
+    <h2>Test Suite Overview</h2>
+    <table>
+      <tr><th>Test</th><th>Purpose</th><th class="result">Result</th></tr>
+      <tr><td>1. sidecar sign+verify roundtrip</td><td>Base envelope + sidecar carrier + <code>did:key</code> resolver</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>2. pdf sign+verify roundtrip</td><td>PDF trailer carrier + content canonicalization</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>3. jpeg sign+verify roundtrip</td><td>JPEG XMP APP1 carrier + segment iteration</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>4. tampered sidecar host file fails verify</td><td>Content-hash mismatch detection (sidecar)</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>5. tampered pdf host file fails verify</td><td>Content-hash mismatch detection (embed carrier)</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>6. re-sign is idempotent</td><td>Re-signing replaces prior envelope; no compounded embed blocks</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>7. help output includes spec URL</td><td>CLI advertises the specification namespace</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>8. keygen produces resolvable did:key</td><td>Mandatory <code>did:key</code> support (&sect;5.1)</td><td class="result"><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h2>Section-by-Section Coverage</h2>
+
+    <h3>&sect;2 Envelope structure</h3>
+    <table>
+      <tr><th>Requirement</th><th>Covered by test</th><th class="result">Status</th></tr>
+      <tr><td>&sect;2.1 required metadata fields (<code>spec</code>, <code>spec_version</code>, <code>issuer</code>, <code>content_type</code>, <code>content_hash</code>, <code>hash_scope</code>, <code>timestamp</code>)</td><td>1, 2, 3 (all roundtrips construct and validate the full metadata object)</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;2.1 optional fields (<code>subject</code>, <code>profile</code>, <code>ieal</code>) accepted</td><td>Manual verification via <code>vcp sign --subject</code> / <code>--profile</code></td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;2.2 signature block <code>alg = EdDSA</code>, <code>value</code> base64url</td><td>1, 2, 3 (produced envelopes conform to shape)</td><td class="result"><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>&sect;3 Canonicalization</h3>
+    <table>
+      <tr><th>Requirement</th><th>Covered by test</th><th class="result">Status</th></tr>
+      <tr><td>&sect;3.1 metadata canonicalized via JCS (RFC 8785)</td><td>Implementation uses <code>canonicalize</code> package on every sign and verify path (see <code>src/envelope.js</code>)</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;3.2 <code>host-file-minus-vcp-block</code> for embed carriers</td><td>2 (PDF), 3 (JPEG); tamper detection tests 4, 5 exercise the rule</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;3.2 <code>host-file-unmodified</code> for sidecar</td><td>1 (sidecar roundtrip), 4 (tamper detection)</td><td class="result"><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>&sect;4 Carriers</h3>
+    <table>
+      <tr><th>Carrier</th><th>Covered by test</th><th class="result">Status</th></tr>
+      <tr><td>&sect;4.1 Sidecar</td><td>1, 4</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;4.2 PDF trailer</td><td>2, 5, 6 (idempotency uses JPEG but same replacement rule applies to PDF via <code>stripVcpTrailer</code>)</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;4.3 JPEG XMP</td><td>3, 6</td><td class="result"><span class="pass">PASS</span></td></tr>
+    </table>
+
+    <h3>&sect;5 DID methods</h3>
+    <table>
+      <tr><th>Method</th><th>Covered by test</th><th class="result">Status</th></tr>
+      <tr><td>&sect;5.1 <code>did:key</code> (mandatory for verifiers)</td><td>1, 2, 3, 8</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;5.2 <code>did:pki</code> (optional; signer accepts, verifier requires <code>--public-key</code> until resolver publishes)</td><td>Documented in README + CLI error text; not covered by v0.1 tests</td><td class="result"><span class="gap">PARTIAL</span></td></tr>
+    </table>
+
+    <h3>&sect;7 Conformance</h3>
+    <table>
+      <tr><th>Requirement</th><th>Covered by test</th><th class="result">Status</th></tr>
+      <tr><td>&sect;7.1.1 signer produces required fields</td><td>1, 2, 3</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;7.1.2 signer canonicalizes before signing</td><td>Implementation invariant; every sign path uses <code>canonicalize()</code></td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;7.1.3 signer uses registered algorithm</td><td>1, 2, 3 (only Ed25519 emitted)</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;7.1.4 signer embeds via a defined carrier</td><td>1, 2, 3</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;7.1.5 SHOULD re-signing replaces, not compounds</td><td>6</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;7.2.1 verifier rejects unknown top-level fields</td><td>Not tested in v0.1; behavior specified but only enforced by strict JSON schema addition planned for v0.2</td><td class="result"><span class="gap">GAP</span></td></tr>
+      <tr><td>&sect;7.2.2 verifier rejects unknown <code>spec_version</code></td><td>Not tested in v0.1; behavior specified</td><td class="result"><span class="gap">GAP</span></td></tr>
+      <tr><td>&sect;7.2.3 verifier recomputes content hash and rejects on mismatch</td><td>4, 5</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;7.2.4 verifier supports <code>did:key</code></td><td>1, 2, 3</td><td class="result"><span class="pass">PASS</span></td></tr>
+      <tr><td>&sect;7.2.5 distinguishes DID-resolution failure from signature failure</td><td>Distinct error paths implemented in <code>src/did.js</code>; not asserted by test suite in v0.1</td><td class="result"><span class="gap">PARTIAL</span></td></tr>
+      <tr><td>&sect;7.2.6 MAY warn on sidecar-separation risk</td><td>Not implemented; documented in README as user-facing risk</td><td class="result"><span class="gap">DEFERRED</span></td></tr>
+    </table>
+
+    <h2>Known Gaps</h2>
+    <div class="gap-box">
+      <p>The gaps below are recognized limitations of the v0.1 implementation. They do not affect correctness on well-formed input but reduce robustness on adversarial or malformed input.</p>
+    </div>
+
+    <ul>
+      <li><strong>Strict unknown-field rejection (&sect;7.2.1, &sect;7.2.2)</strong> &mdash; a JSON Schema validation pass is planned for v0.2 to enforce this at the deserialization boundary. Current implementation ignores unknown fields silently.</li>
+      <li><strong><code>did:pki</code> resolver (&sect;5.2)</strong> &mdash; verification of <code>did:pki:*</code> issuers requires the caller to supply the resolved Ed25519 public key via <code>--public-key</code>. A published <code>@attestto/did-pki</code> resolver is planned as part of the v0.2 track; will resolve against the Costa Rica Firma Digital CA hierarchy first.</li>
+      <li><strong>Resolution-failure vs signature-failure distinction (&sect;7.2.5)</strong> &mdash; the code paths differ but the test suite does not yet assert that the error emitted for a resolution failure differs from the error emitted for a signature failure. A v0.2 test will make this observable.</li>
+      <li><strong>Sidecar separation warning (&sect;7.2.6)</strong> &mdash; documented in README and specification; the CLI does not emit a warning when it observes an isolated sidecar (host missing). Follow-on ticket to add a <code>vcp verify --strict-sidecar</code> option.</li>
+      <li><strong>PDF PAdES integration</strong> &mdash; v0.1 uses a <code>%%vcp:begin</code> / <code>%%vcp:end</code> trailer after <code>%%EOF</code> rather than a proper PDF signature dictionary with <code>/ByteRange</code>. A separate <code>pdf-pades</code> carrier is planned for a future revision to co-exist with legacy PAdES signatures on the same document.</li>
+      <li><strong>MP3 and MP4 carriers</strong> &mdash; specification and implementation deferred to v0.2 per <a href="https://attestto.atlassian.net/browse/ATT-773">ATT-773</a>. Embed slot analysis is documented in the internal research doc; carriers will follow the same envelope + canonicalization pattern as PDF and JPEG.</li>
+      <li><strong>Encryption</strong> &mdash; v0.1 signs only. A standalone <code>.vcp</code> extension with encrypted payload (X25519 + XChaCha20-Poly1305) is planned for v0.2 as a distinct carrier.</li>
+      <li><strong>Post-quantum hybrid signature suite</strong> &mdash; only <code>EdDSA</code> is specified for v0.1. A future revision will add an algorithm registry with ML-DSA + Ed25519 hybrid options; existing signatures remain valid under the algorithm they were signed with.</li>
+    </ul>
+
+    <h2>How to Reproduce</h2>
+    <p>All tests are runnable with:</p>
+    <pre style="background: var(--code-bg); padding: 1rem; border-radius: 6px; font-family: 'SF Mono','Fira Code','Consolas',monospace; font-size: 0.85em;">git clone https://github.com/Attestto-com/vcp-cli
+cd vcp-cli
+pnpm install
+pnpm test</pre>
+    <p>Test source: <a href="https://github.com/Attestto-com/vcp-cli/blob/main/test/roundtrip.test.js"><code>test/roundtrip.test.js</code></a>. Each test spawns the CLI as a subprocess, exercising the same public surface an external implementer would use.</p>
+
+    <h2>Invitation to External Implementers</h2>
+    <p>VCP is an open specification. Additional reference implementations in other languages (Rust, Go, Python, Swift) are invited. Implementers who publish a conformance report following the shape of this document are invited to open a PR on <a href="https://github.com/Attestto-com/did-sns-spec"><code>did-sns-spec</code></a> to have their report linked from <a href="../">the specification page</a>.</p>
+
+    <footer>
+      <p>Implementation Report licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>. Reference implementation licensed under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.</p>
+      <p>Report against VCP v0.1 Working Draft, published 2026-07-01. Reference implementation: <a href="https://github.com/Attestto-com/vcp-cli">github.com/Attestto-com/vcp-cli</a>.</p>
+    </footer>
+  </div>
+</body>
+</html>
