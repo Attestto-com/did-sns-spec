@@ -11,6 +11,12 @@ sns-name      = label *( "." label )
 label         = 1*( ALPHA / DIGIT / "-" )
 ```
 
+> **Reserved network labels (disambiguation).** The grammar is ambiguous for a bare token that matches a network name (e.g. `did:sns:testnet` could parse as the top-level name `testnet`, or as the network `testnet` with an empty name). To resolve this deterministically across implementations:
+>
+> - The tokens `mainnet`, `devnet`, and `testnet` are **reserved as network selectors**. When the first colon-delimited segment after `did:sns:` equals one of these tokens **and is followed by another `:` and a non-empty `sns-name`**, a resolver **MUST** parse it as the `network` component (e.g. `did:sns:devnet:alice.crbank`).
+> - Consequently these three tokens **MUST NOT** be registered or resolved as top-level `sns-name` labels, and a resolver **MUST** reject `did:sns:mainnet`, `did:sns:devnet`, and `did:sns:testnet` (a network token with no name) as `invalidDid`.
+> - When no `network` component is present, `mainnet` is implied.
+
 **Examples:**
 
 | DID | Description |
