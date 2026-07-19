@@ -52,6 +52,8 @@ The subdomain's Class Key (bytes 64–95) controls who can update the data buffe
 | **SAS-Locked** | SAS Program ID | SAS program via CPI | Platform-managed identities |
 | **Custom** | Custom program | Custom program via CPI | Tenant governance programs |
 
+> **Security consequence of SAS-Locked / Custom mode.** When a subdomain is class-locked, the **class-key holder — not the named subject — controls every write to that subdomain's data buffer**: rotating `#solana-key`, replacing the ECIES encryption key (which lets the holder read VP payloads encrypted to the DID from that point forward), moving the SAS attestation pointer, and repointing service endpoints. A class-locked subdomain is therefore **platform-managed, not self-sovereign** — its integrity depends on the honesty and operational security of the class-key holder. See [§12.5 Malicious or Compromised Controller / Class-Key Holder](12-security.md#125-malicious-or-compromised-controller--class-key-holder) for the full threat model and mitigations. The **Open** mode (zero class key) is the self-sovereign alternative, where only the domain owner can write.
+
 ---
 
 [← §10 Metadata Schema](10-metadata-schema.md) | [Next: §12 Security Considerations →](12-security.md)

@@ -13,7 +13,7 @@ A `did:sns` DID is created by registering an SNS domain on Solana and writing DI
 
 > **DID registration requires an on-chain write.** The `did:sns` method stores DID metadata in the **raw data buffer** of the Name Registry Account (bytes 96+) using the Name Service Program's native `update` instruction — not the SNS Records Program. Without this explicit write, the resolver falls back to a degraded minimal document (owner key only) with no service endpoints, encryption keys, or SAS attestation link.
 
-> **WARNING:** The degraded fallback (owner key only) MUST NOT be treated as a registered DID identity. Verifiers MUST reject fallback-only documents for any operation requiring authentication, encryption, credential verification, or SAS attestation validation. A domain without DID metadata in its raw data buffer is simply an SNS domain — not a `did:sns` identity.
+> **WARNING:** The degraded fallback (owner key only) MUST NOT be treated as a registered DID identity. Verifiers MUST reject fallback-only documents for any operation requiring authentication, encryption, credential verification, or SAS attestation validation. A domain without DID metadata in its raw data buffer is simply an SNS domain — not a `did:sns` identity. Resolvers signal this state via `didResolutionMetadata.degraded = true` so the rejection is enforceable generically — see [§9.2 Degraded Resolution Signalling](#degraded-resolution-signalling).
 
 ### Subdomain Delegation Models
 
@@ -40,12 +40,16 @@ resolve(did):
       • parent = ROOT_DOMAIN_ACCOUNT (58PwtjS...) for top-level domains
       • For subdomains: derive parent PDA first, then child with \0 prefix
   6.  Fetch AccountInfo from Solana RPC
+      (high-assurance resolvers: read from multiple independent RPCs and
+       require quorum on owner key + buffer bytes — see §12.6)
   7.  If not found → return notFound error
   8.  Extract owner key (bytes 32-63)
   9.  If owner is zero address → return deactivated
  10.  Check data buffer (bytes 96+) for magic 0x44494401:
       a. Found → parse DID metadata (v1 or v2 schema)
-      b. Not found → degraded fallback (owner key only, no services/encryption)
+      b. Not found → degraded fallback (owner key only, no services/encryption);
+         MUST set didResolutionMetadata.degraded = true + a warning
+         (see "Degraded Resolution Signalling" below)
  11.  If v2 + HAS_SAS flag → follow SAS UID for issuer-signed claims
  12.  Set controller from parent domain hierarchy
  13.  Populate service endpoints
@@ -56,7 +60,7 @@ resolve(did):
 
 1. Check data buffer for `0x44494401` magic → parse DID metadata (v1 or v2)
 2. If v2 + `HAS_SAS` → follow SAS attestation UID for issuer-signed claims
-3. Fallback → degraded DID Document from owner key only (no services, no encryption)
+3. Fallback → degraded DID Document from owner key only (no services, no encryption). The resolver MUST flag this in `didResolutionMetadata` (see [Degraded Resolution Signalling](#degraded-resolution-signalling)) so consumers can reject it without `did:sns`-specific knowledge.
 
 ### Error Codes
 
@@ -66,6 +70,25 @@ resolve(did):
 | `notFound` | 404 | SNS domain not registered or account does not exist |
 | `deactivated` | 200 | Owner is zero address; `didDocumentMetadata.deactivated = true` |
 | `internalError` | 500 | RPC failure or resolver error |
+
+### Degraded Resolution Signalling
+
+A domain that exists on-chain but has **no DID metadata** written to its data buffer (no `0x44494401` magic) still resolves — to a *degraded* document containing only the owner key. Because that document is structurally indistinguishable from a fully-registered one, the §9.1 requirement that verifiers "MUST reject fallback-only documents" is unenforceable unless the degraded state is machine-readable. A consumer reading resolution output through a generic [DIF Universal Resolver](https://dev.uniresolver.io/) has no `did:sns`-specific hook to apply.
+
+Therefore, when the resolver produces a degraded fallback document it **MUST** set the following in `didResolutionMetadata`:
+
+| Property | Value | Meaning |
+|---|---|---|
+| `degraded` | `true` (boolean) | The document was synthesised from the owner key only; no DID metadata (`0x44494401`) was present in the data buffer. |
+| `warning` | string | Human-readable note, e.g. `"unregistered did:sns — SNS domain exists but no DID metadata was written; owner key only, no services / encryption / attestation"`. |
+
+Consuming rules:
+
+- A verifier **MUST** treat a result with `didResolutionMetadata.degraded === true` as an **unregistered** identity and **MUST NOT** rely on it for authentication, encryption, credential verification, or SAS attestation validation. It carries no issuer binding and no trust (see [§12](12-security.md), "DID registration is not implicit").
+- The owner key **MAY** appear in the degraded document's `verificationMethod`, but its presence there **MUST NOT** be read as authorisation for any of the above operations while `degraded` is set.
+- A resolver **MAY** instead return a `notFound`-adjacent result (empty `didDocument`) for degraded resolutions where a populated-but-untrusted document would be more error-prone for its consumers; if it does, it **MUST** still set `degraded: true` so the distinction from a genuinely non-existent domain is preserved.
+
+> **Rationale:** This moves the "reject the fallback" obligation from prose every verifier must remember to implement, to a single machine-readable flag any DID-aware consumer can gate on — closing the downgrade path where an unwritten domain is mistaken for a registered identity.
 
 ## 9.3 Update
 
@@ -130,6 +153,13 @@ A DID is deactivated by transferring ownership to the system program (all-zero a
 ```
 
 > **WARNING — IRREVERSIBLE:** Transferring a domain to the zero address is permanent. The SNS program does not support reclaiming a zero-owner domain. All associated SAS attestations, service endpoints, and credential references become unresolvable. Deactivate only when the identity must be permanently retired.
+
+### Registration Persistence & Lapse
+
+This specification assumes the underlying SNS registration for a resolved name **persists** for the life of the DID. Two lifecycle events are security-relevant and MUST be handled by implementers:
+
+- **Ownership transfer (sale / marketplace / registrar action).** SNS names are transferable assets. A transfer produces a resolution result **identical** to a legitimate key rotation (§9.3): the new owner inherits the DID identifier and can write fresh metadata under it. A hostile acquisition of a name — especially a **root / organizational** name (`crbank.sol`) — is therefore indistinguishable, at the DID layer alone, from the same entity rotating its own key. For self-sovereign roots (no `controller`, self-signed attestations) there is no built-in continuity anchor: trust rests on whoever holds the name *now*. See [§12](12-security.md) ("Domain transfer / ownership continuity") for verifier mitigations and the open question of a mandated continuity proof.
+- **Registration lapse / expiry.** If a deployment uses an SNS registration model with expiry/renewal, a lapsed name MAY become re-registrable by a third party, who would then control the DID identifier and could repurpose it. Implementers MUST define, per deployment: whether names can lapse, what a lapsed name resolves to, and whether re-registration after lapse is permitted for identity-bearing names. Names bearing regulated identity SHOULD be held under a registration/renewal model that does not permit silent third-party re-acquisition. This specification does not itself guarantee non-expiry — that is a property of the chosen registration model, and MUST NOT be assumed.
 
 ## 9.5 DID Lifecycle: Issue Once, Evolve Forever
 
