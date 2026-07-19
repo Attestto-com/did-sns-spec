@@ -73,6 +73,11 @@ Verifier resolves → no active LEI → no valid org attestation → REJECTED by
 The DID exists on-chain (anyone can register a .sol domain) but carries zero institutional trust.
 ```
 
+> [!IMPORTANT]
+> **The alias is a name, not a trust signal.** Model D shows a *verifier* rejecting a no-LEI scammer, but a *human* shown `crbank-official.sol` or `cr-bank.sol` in a wallet UI may trust it on sight. The `sns-name` ABNF (§7) is ASCII-only — which blocks Unicode confusables — but ASCII homoglyphs (`rn`→`m`, `0`↔`o`, `l`↔`1`) and hyphen/qualifier insertion (`cr-bank`, `crbank-official`, `crbank-support`) remain freely registrable. Consequently:
+> - A verifier or wallet **MUST NOT** infer legitimacy from an alias that resembles a known brand. Trust **MUST** derive from the issuer-independent attestation chain (LEI + §3.4 ecosystem anchoring), **never** from the alias string.
+> - Wallet UIs that present an alias to a human **SHOULD** apply confusable/skeleton normalization (e.g. a Unicode TR39-style skeleton over the ASCII set) and **SHOULD** warn when a resolved alias is a near-collision with a known trusted name the user has interacted with before (trust-on-first-use pinning).
+
 ## 3.3 Cross-Domain Trust
 
 When a verifier encounters a DID from an unfamiliar root domain, the following verification steps are **recommended**:

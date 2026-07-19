@@ -273,7 +273,10 @@ A platform-issued subdomain for a power user with full self-sovereign control. S
 }
 ```
 
-**Note:** No `controller` field — top-level domains are self-sovereign. Trust is established via `alsoKnownAs` and LEI bridge, not hierarchy.
+**Note:** No `controller` field — top-level domains are self-sovereign. Trust is anchored in the LEI bridge and an issuer-independent attestation (§3.4), corroborated via `alsoKnownAs`, not hierarchy.
+
+> [!IMPORTANT]
+> **`alsoKnownAs` is self-asserted — verify bidirectionally before trusting it.** Per [DID Core](https://www.w3.org/TR/did-core/#also-known-as), `alsoKnownAs` entries are unverified claims made by the subject; on their own they convey **no** trust, and a lookalike domain can list a real institution's GLEIF record or `did:web` to borrow its reputation. Before treating an `alsoKnownAs` link as evidence of the named entity, a verifier **MUST** confirm the link is **bidirectional** — the referenced resource links back to this DID (e.g. the `did:web:` document names this DID in its own `alsoKnownAs`/`controller`, and the GLEIF record is confirmed by a **live LEI lookup** whose `entity` matches the asserted domain). A one-directional `alsoKnownAs` **MUST NOT** be used to transfer trust from the referenced entity to this DID.
 
 ## 8.4 Example — Tenant Client (Under Bank Root)
 
