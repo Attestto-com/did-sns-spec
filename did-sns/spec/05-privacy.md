@@ -16,7 +16,7 @@ Privacy in `did:sns` is a layered architecture where each layer addresses a diff
 | **Selective disclosure** | SD-JWT ([IETF draft-ietf-oauth-selective-disclosure-jwt](https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/)) with per-field salt and hash | User reveals only the fields required per presentation (e.g., "KYC Level 2" without date of birth) | **Credential layer (requires issuer stack)** — did:sns defines the identity; selective disclosure applies to credentials issued to that identity |
 | **ZKP predicates** | BBS+ signatures for unlinkable proofs | Prove properties ("age ≥ 18", "jurisdiction = EU") without revealing the underlying value | **Credential layer (requires issuer stack + BBS+ implementation)** — not yet implemented in reference stack |
 | **Consent-gated access** | 2-of-2 XOR key-split (VMK architecture) | Neither the platform nor the user alone can decrypt proof data; both must participate | **Platform infrastructure (requires vault implementation)** — defined in spec but requires operational infrastructure |
-| **LEI privacy** | LEI numbers stored as SHA-256 hashes in SAS attestations | Verifiers hash a known LEI to compare; on-chain data doesn't reveal the LEI itself | **SAS layer (requires attestation infrastructure)** |
+| **LEI binding (integrity, not privacy)** | LEI stored as a SHA-256 hash in the SAS attestation, binding the attestation to a specific LEI tamper-evidently | Lets a verifier confirm *which* LEI is asserted by hashing a known LEI to compare. **Not confidential:** an LEI is a public GLEIF identifier, so the hash is dictionary-reversible and MUST NOT be relied on to conceal the entity. | **SAS layer (requires attestation infrastructure)** |
 
 ### What did:sns provides standalone (no additional infrastructure)
 
@@ -32,6 +32,10 @@ Privacy in `did:sns` is a layered architecture where each layer addresses a diff
 2. **ZKP predicates (BBS+)** — requires BBS+ signature implementation in the issuance and presentation stack
 3. **Consent-gated vault access** — requires platform-operated encrypted vault infrastructure with 2-of-2 key split
 4. **SAS attestations** — require the Solana Attestation Service program and authorized issuers
+
+> [!IMPORTANT]
+> **Attribute disclosure vs. PII.** "No personal data on-chain" means no *directly-identifying* PII (name, email, date of birth, national ID) — it does **not** mean zero attribute disclosure. A v2 SAS attestation stores `role_level`, `jurisdiction` (ISO 3166), and `expires_at` as **plaintext** on the public ledger, linkable to the resolvable public alias. These are low-entropy quasi-identifiers, and **hashing does not conceal low-entropy values**: an LEI is a public GLEIF identifier (~2.5M active) and `jurisdiction` has ~249 possible values, so an unsalted SHA-256 is dictionary-reversible in seconds. On-chain hashes here are **tamper-evident bindings for comparison, not confidentiality**. Deployments that require attribute confidentiality MUST keep such fields in the off-chain credential / SAS-private layer, not in the public attestation.
+
 ## 5.2 Correlation Risk & Mitigations
 
 SNS aliases are public and resolvable. This creates correlation risk — if a user shares `alice.crbank.sol` with multiple parties, those parties can correlate interactions. Mitigations:

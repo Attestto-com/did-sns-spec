@@ -59,11 +59,16 @@ ML-DSA-44 public keys (1,312 bytes) and ML-KEM-768 keys (1,184 bytes) exceed the
 - The SAS attestation includes `pq_auth_key` and `pq_kem_key` fields in its Borsh-serialized data payload
 - The resolver, upon seeing `HAS_PQ`, fetches the SAS attestation and adds the PQ verification methods to the DID Document
 
+> [!CAUTION]
+> **Chain-level ceiling on PQ-readiness.** Writing the `HAS_PQ` flag and the SAS attestation that references the PQ keys is authorized by **domain ownership**, which on Solana is proven by an **Ed25519 transaction signature**. A cryptographically-relevant quantum computer (CRQC) that breaks Ed25519 can therefore take the domain and install *its own* PQ keys — so PQ verification methods first introduced **after** Ed25519 is already at risk provide no protection: the attacker can forge the very transaction that installs them. `did:sns` PQ-readiness cannot exceed the anchoring chain's transaction-authorization scheme; a fully PQ-secure deployment additionally requires Solana (or the anchoring chain) to offer PQ-secure transaction signing. This ceiling bounds *every* Solana-anchored identity method written over standard transactions, not `did:sns` uniquely, but it MUST be accounted for.
+>
+> **Mitigation — pre-commit early.** Subjects and issuers SHOULD register the `#pq-auth-key` **now, while Ed25519 is still secure**, dual-signed by both the classical key and the PQ key, so the PQ key's authenticity is anchored by a signature made *before* a CRQC exists rather than one an attacker could forge afterward.
+
 ### Timeline
 
 | Phase | Trigger | Action |
 |---|---|---|
-| **Phase 1** (current) | Now | Classical-only. Reserve `HAS_PQ` flag bit. Spec defines PQ verification method types. |
+| **Phase 1** (current) | Now | Classical-only baseline. Reserve `HAS_PQ` flag bit; spec defines PQ verification method types. **Subjects/issuers SHOULD pre-commit `#pq-auth-key` now, dual-signed (classical + PQ),** so PQ-key authenticity predates any CRQC — see the chain-ceiling note above. |
 | **Phase 2** (hybrid) | NIST finalizes FIPS 204/203 + Solana runtime supports PQ signature verification | Dual classical+PQ keys. Issuers sign with both. Verifiers accept either. |
 | **Phase 3** (PQ-only) | CRQC threat is imminent or classical algorithms are deprecated by NIST | Classical keys removed. `#solana-key` and `#ecies-key` sunset. |
 
